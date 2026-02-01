@@ -1002,6 +1002,21 @@ MIT License - See LICENSE file
 
 ---
 
+## 🚀 Project Evolution & Meme Coin Launch
+
+The vision for the Laxigam Blockchain has always been to bridge the gap between real-world finance and gaming economies. However, building a fully decentralized, production-ready blockchain infrastructure is an immensely complex and capital-intensive endeavor for a single individual, even with the aid of advanced AI.
+
+To keep the project alive and accessible to our community, we have transitioned the experimental phase of Laxigam (LXG) into a **Meme Coin** within the Telegram ecosystem via the **Blum** app. This allows you to engage with the token, understand blockchain mechanics, and support the project's ongoing research and development.
+
+### 🪙 Token Details
+- **Token ID:** `EQDnEqaFaq5-yBqOznT4hXoX7PvM11ib8aUdLK-HRbxMeXBd`
+- **Join the Community on Blum:** [Launch Laxigam on Blum](https://t.me/blum/app?startapp=memepadjetton_LXG_sduHT-ref_R1rJWgg92E)
+
+### 🤝 Open Source & Attribution
+This project is open-source under the **MIT License**. You are welcome to use, study, and customize the codebase for your own projects. We only ask for one thing in return: **Proper Attribution**. Please credit **Nigam Rathod / Laxigam blockchain** in any derivative works.
+
+---
+
 ## ☕ Support the Project
 
 If you find this project useful, considering supporting the development!
