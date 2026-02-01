@@ -1,0 +1,152 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: laxigam_postgres
+    environment:
+      POSTGRES_DB: laxigam
+      POSTGRES_USER: laxigam
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-laxigam_secure_password}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./backend/database/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - laxigam_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U laxigam -d laxigam"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: laxigam_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - laxigam_network
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Backend API
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: laxigam_backend
+    environment:
+      - DATABASE_URL=postgresql://laxigam:${DB_PASSWORD:-laxigam_secure_password}@postgres:5432/laxigam
+      - REDIS_URL=redis://redis:6379/0
+      - API_SECRET_KEY=${API_SECRET_KEY}
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - RAZORPAY_KEY_ID=${RAZORPAY_KEY_ID}
+      - RAZORPAY_SECRET=${RAZORPAY_SECRET}
+      - MERCADOPAGO_ACCESS_TOKEN=${MERCADOPAGO_ACCESS_TOKEN}
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+      - /app/__pycache__
+    networks:
+      - laxigam_network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+
+  # Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: laxigam_frontend
+    environment:
+      - VITE_API_URL=http://localhost:8000
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    networks:
+      - laxigam_network
+    depends_on:
+      - backend
+    command: npm run dev -- --host
+
+  # Celery Worker
+  celery:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: laxigam_celery
+    environment:
+      - DATABASE_URL=postgresql://laxigam:${DB_PASSWORD:-laxigam_secure_password}@postgres:5432/laxigam
+      - REDIS_URL=redis://redis:6379/0
+      - API_SECRET_KEY=${API_SECRET_KEY}
+    volumes:
+      - ./backend:/app
+    networks:
+      - laxigam_network
+    depends_on:
+      - postgres
+      - redis
+    command: celery -A tasks worker --loglevel=info
+
+  # Celery Beat (Scheduler)
+  celery-beat:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: laxigam_celery_beat
+    environment:
+      - DATABASE_URL=postgresql://laxigam:${DB_PASSWORD:-laxigam_secure_password}@postgres:5432/laxigam
+      - REDIS_URL=redis://redis:6379/0
+    volumes:
+      - ./backend:/app
+    networks:
+      - laxigam_network
+    depends_on:
+      - postgres
+      - redis
+    command: celery -A tasks beat --loglevel=info
+
+  # Nginx (Production)
+  nginx:
+    image: nginx:alpine
+    container_name: laxigam_nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx/ssl:/etc/nginx/ssl
+    networks:
+      - laxigam_network
+    depends_on:
+      - backend
+      - frontend
+    profiles:
+      - production
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  laxigam_network:
+    driver: bridge
