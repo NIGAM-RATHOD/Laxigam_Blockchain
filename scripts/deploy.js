@@ -61,12 +61,27 @@ async function main() {
   await governance.waitForDeployment();
   console.log("✅ Governance deployed to:", await governance.getAddress());
 
+  // Deploy MediatorVault
+  console.log("\n📦 Deploying MediatorVault...");
+  const MediatorVault = await ethers.getContractFactory("MediatorVault");
+  const mediatorVault = await MediatorVault.deploy(
+    await lxgToken.getAddress(),
+    deployer.address,  // Oracle (update in production)
+    deployer.address   // Treasury (update in production)
+  );
+  await mediatorVault.waitForDeployment();
+  console.log("✅ MediatorVault deployed to:", await mediatorVault.getAddress());
+
   // Setup permissions
   console.log("\n🔐 Setting up permissions...");
 
   // Authorize GameBridge as minter
   await (await lxgToken.authorizeMinter(await gameBridge.getAddress())).wait();
   console.log("✅ GameBridge authorized as minter");
+
+  // Authorize MediatorVault as minter
+  await (await lxgToken.authorizeMinter(await mediatorVault.getAddress())).wait();
+  console.log("✅ MediatorVault authorized as minter");
 
   // Authorize contracts in TrustScore
   await (await trustScore.registerAuthorizedContract(await gameBridge.getAddress())).wait();
@@ -97,7 +112,8 @@ async function main() {
       AIValidator: await aiValidator.getAddress(),
       GameBridge: await gameBridge.getAddress(),
       NFTMarketplace: await nftMarketplace.getAddress(),
-      Governance: await governance.getAddress()
+      Governance: await governance.getAddress(),
+      MediatorVault: await mediatorVault.getAddress()
     }
   };
 
@@ -132,6 +148,7 @@ async function main() {
   console.log("  GameBridge:    ", await gameBridge.getAddress());
   console.log("  NFTMarketplace:", await nftMarketplace.getAddress());
   console.log("  Governance:    ", await governance.getAddress());
+  console.log("  MediatorVault: ", await mediatorVault.getAddress());
   console.log("\n" + "=".repeat(60));
 
   // Verify contracts if on supported network

@@ -115,7 +115,8 @@ contract AIValidator is IAIValidator, Ownable, Pausable {
         uint256 amount, 
         uint256 trustScore
     ) external view override returns (bool approved, uint256 confidence, string memory reason) {
-        emit ValidationRequested(sender, receiver, amount);
+        // Note: Events cannot be emitted in view functions.
+        // ValidationRequested event should be emitted by the calling contract.
         
         if (isAIOnline) {
             // When AI is online, return optimistic approval

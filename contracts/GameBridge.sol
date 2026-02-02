@@ -145,10 +145,10 @@ contract GameBridge is Ownable, ReentrancyGuard, Pausable {
         // Transfer tokens from user to this contract
         require(lxgToken.transferFrom(msg.sender, address(this), amount), "Transfer failed");
         
-        // Check if escrow is needed
-        if (amount >= escrowThreshold || confidence < 80) {
+        // Check if escrow is needed (for large amounts only - AI validation is done off-chain via signature)
+        if (amount >= escrowThreshold) {
             uint256 escrowId = nextEscrowId++;
-            string memory escrowReason = amount >= escrowThreshold ? "Large amount" : "Low AI confidence";
+            string memory escrowReason = "Large amount requires escrow";
             
             escrows[escrowId] = EscrowItem({
                 amount: amount,
