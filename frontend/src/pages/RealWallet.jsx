@@ -11,15 +11,18 @@ import {
   Shield,
   TrendingUp
 } from 'lucide-react';
+import Flag from '../components/ui/Flag';
 import { useWalletStore, useExchangeStore } from '../store/walletStore';
 import toast from 'react-hot-toast';
+
+const CURRENCY_FLAGS = { INR: '🇮🇳', BRL: '🇧🇷', RUB: '🇷🇺', CNY: '🇨🇳', USD: '🇺🇸', ZAR: '🇿🇦' };
 
 function RealWallet() {
   const { address, realBalance, trustScore, fetchBalance } = useWalletStore();
   const { lxgUsdRate, convertLXGToFiat, rates } = useExchangeStore();
   const [activeTab, setActiveTab] = useState('overview');
   const [sendAmount, setSendAmount] = useState('');
-  [sendRecipient, setSendRecipient] = useState('');
+  const [sendRecipient, setSendRecipient] = useState('');
 
   const usdValue = realBalance * lxgUsdRate;
 
@@ -49,12 +52,12 @@ function RealWallet() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-white">Real Wallet</h1>
+        <h1 className="text-3xl font-bold text-white">Real Wallet</h1>
         <p className="text-gray-400 mt-1">Manage your LXG tokens in the real world</p>
       </div>
 
       {/* Balance Card */}
-      <div className="card bg-gradient-to-br from-[#1a1a2e] to-[#252542]">
+      <div className="card bg-gradient-to-br from-[#12121c] to-[#1a1a28]">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
           <div>
             <p className="text-gray-400 text-sm">Available Balance</p>
@@ -76,7 +79,7 @@ function RealWallet() {
             </Link>
             <button
               onClick={handleRefresh}
-              className="p-3 rounded-xl bg-[#0a0a0f] border border-[#d4af37]/20 hover:border-[#d4af37]/40 transition-colors"
+              className="p-3 rounded-xl bg-black/35 border border-[#d4af37]/20 hover:border-[#d4af37]/40 transition-colors"
             >
               <RefreshCw className="w-5 h-5" />
             </button>
@@ -93,7 +96,7 @@ function RealWallet() {
             <div className="flex gap-2">
               <button
                 onClick={copyAddress}
-                className="p-2 rounded-lg bg-[#0a0a0f] hover:bg-white/5 transition-colors"
+                className="p-2 rounded-lg bg-black/35 hover:bg-white/5 transition-colors"
                 title="Copy Address"
               >
                 <Copy className="w-4 h-4" />
@@ -102,7 +105,7 @@ function RealWallet() {
                 href={`https://polygonscan.com/address/${address}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="p-2 rounded-lg bg-[#0a0a0f] hover:bg-white/5 transition-colors"
+                className="p-2 rounded-lg bg-black/35 hover:bg-white/5 transition-colors"
                 title="View on Explorer"
               >
                 <ExternalLink className="w-4 h-4" />
@@ -196,7 +199,7 @@ function RealWallet() {
           <div className="card">
             <h3 className="font-semibold mb-4">Quick Stats</h3>
             <div className="space-y-4">
-              <div className="flex items-center justify-between p-3 bg-[#0a0a0f] rounded-lg">
+              <div className="flex items-center justify-between p-3 bg-black/35 rounded-lg">
                 <div className="flex items-center gap-3">
                   <TrendingUp className="w-5 h-5 text-green-500" />
                   <span className="text-sm">Total Deposited</span>
@@ -204,7 +207,7 @@ function RealWallet() {
                 <span className="font-medium">0 LXG</span>
               </div>
               
-              <div className="flex items-center justify-between p-3 bg-[#0a0a0f] rounded-lg">
+              <div className="flex items-center justify-between p-3 bg-black/35 rounded-lg">
                 <div className="flex items-center gap-3">
                   <ArrowUpRight className="w-5 h-5 text-red-500" />
                   <span className="text-sm">Total Withdrawn</span>
@@ -212,7 +215,7 @@ function RealWallet() {
                 <span className="font-medium">0 LXG</span>
               </div>
               
-              <div className="flex items-center justify-between p-3 bg-[#0a0a0f] rounded-lg">
+              <div className="flex items-center justify-between p-3 bg-black/35 rounded-lg">
                 <div className="flex items-center gap-3">
                   <Wallet className="w-5 h-5 text-[#d4af37]" />
                   <span className="text-sm">Current Balance</span>
@@ -254,7 +257,7 @@ function RealWallet() {
             </div>
             
             <button
-              onClick={() => toast.info('P2P transfers coming soon!')}
+              onClick={() => toast('P2P transfers coming soon!')}
               disabled={!sendRecipient || !sendAmount}
               className="btn-primary w-full"
             >
@@ -272,15 +275,10 @@ function RealWallet() {
             {Object.entries(rates).map(([currency, data]) => (
               <div
                 key={currency}
-                className="p-4 bg-[#0a0a0f] rounded-xl text-center"
+                className="p-4 bg-black/35 rounded-xl text-center"
               >
-                <p className="text-2xl mb-1">
-                  {currency === 'INR' && '🇮🇳'}
-                  {currency === 'BRL' && '🇧🇷'}
-                  {currency === 'RUB' && '🇷🇺'}
-                  {currency === 'CNY' && '🇨🇳'}
-                  {currency === 'USD' && '🇺🇸'}
-                  {currency === 'ZAR' && '🇿🇦'}
+                <p className="mb-2 flex justify-center">
+                  <Flag emoji={CURRENCY_FLAGS[currency]} size={22} title={currency} />
                 </p>
                 <p className="font-semibold">{currency}</p>
                 <p className="text-sm text-gray-500">

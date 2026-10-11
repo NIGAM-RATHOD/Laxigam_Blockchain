@@ -127,7 +127,20 @@ function TransactionHistory() {
   };
 
   const handleExport = () => {
-    toast.info('Export feature coming soon!');
+    const columns = ['id', 'type', 'amount', 'currency', 'status', 'timestamp', 'source', 'destination', 'txHash'];
+    const escape = (value) => `"${String(value ?? '').replace(/"/g, '""')}"`;
+    const csv = [
+      columns.join(','),
+      ...filteredTransactions.map((tx) => columns.map((col) => escape(tx[col])).join(',')),
+    ].join('\n');
+
+    const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `laxigam-transactions-${new Date().toISOString().slice(0, 10)}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+    toast.success(`Exported ${filteredTransactions.length} transactions`);
   };
 
   return (
@@ -135,7 +148,7 @@ function TransactionHistory() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-white">Transaction History</h1>
+          <h1 className="text-3xl font-bold text-white">Transaction History</h1>
           <p className="text-gray-400 mt-1">View all your LXG transactions</p>
         </div>
         <button
@@ -217,7 +230,7 @@ function TransactionHistory() {
               return (
                 <div
                   key={tx.id}
-                  className="flex items-center gap-4 p-4 bg-[#0a0a0f] rounded-xl hover:bg-[#1a1a2e] transition-colors"
+                  className="flex items-center gap-4 p-4 bg-black/35 rounded-xl hover:bg-[#12121c] transition-colors"
                 >
                   {/* Icon */}
                   <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${statusColors[tx.status]}`}>
@@ -277,7 +290,7 @@ function TransactionHistory() {
             <button
               onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
               disabled={currentPage === 1}
-              className="p-2 rounded-lg bg-[#0a0a0f] disabled:opacity-50"
+              className="p-2 rounded-lg bg-black/35 disabled:opacity-50"
             >
               <ChevronLeft className="w-5 h-5" />
             </button>
@@ -289,7 +302,7 @@ function TransactionHistory() {
             <button
               onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
               disabled={currentPage === totalPages}
-              className="p-2 rounded-lg bg-[#0a0a0f] disabled:opacity-50"
+              className="p-2 rounded-lg bg-black/35 disabled:opacity-50"
             >
               <ChevronRight className="w-5 h-5" />
             </button>

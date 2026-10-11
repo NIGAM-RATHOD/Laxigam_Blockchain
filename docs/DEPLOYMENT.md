@@ -330,27 +330,25 @@ sudo systemctl restart nginx
 # Get bot token
 ```
 
-### 2. Configure Webhook
+### 2. Configure everything with one script
 
-```bash
-curl -X POST "https://api.telegram.org/bot<TOKEN>/setWebhook" \
-  -d "url=https://api.laxigam.com/telegram/webhook" \
-  -d "secret_token=your_webhook_secret"
+Set these in `.env` on the server:
+
+```env
+TELEGRAM_BOT_TOKEN=7123456789:AAH...
+MINI_APP_URL=https://laxigam.com
+BACKEND_PUBLIC_URL=https://api.laxigam.com
+TELEGRAM_WEBHOOK_SECRET=            # empty = the script generates one
 ```
 
-### 3. Set Commands
+Then run:
 
 ```bash
-curl -X POST "https://api.telegram.org/bot<TOKEN>/setMyCommands" \
-  -d 'commands=[
-    {"command":"start","description":"Start the bot"},
-    {"command":"app","description":"Open Mini App"},
-    {"command":"balance","description":"Check balance"},
-    {"command":"deposit","description":"Deposit funds"},
-    {"command":"withdraw","description":"Withdraw funds"},
-    {"command":"help","description":"Get help"}
-  ]'
+python backend/setup_telegram.py           # commands, descriptions, menu button, webhook (with secret)
+python backend/setup_telegram.py --status  # confirm webhook URL, pending updates, menu button
 ```
+
+The API rejects webhook calls whose `X-Telegram-Bot-Api-Secret-Token` header doesn't match `TELEGRAM_WEBHOOK_SECRET`, so restart the backend after setting it.
 
 ---
 

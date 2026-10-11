@@ -6,9 +6,8 @@ import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/Pausable.sol";
-import "@openzeppelin/contracts/utils/Counters.sol";
 import "./LXGToken.sol";
 import "./TrustScore.sol";
 
@@ -24,10 +23,9 @@ import "./TrustScore.sol";
  * - Cross-game NFT bridge
  */
 contract NFTMarketplace is Ownable, ReentrancyGuard, Pausable {
-    using Counters for Counters.Counter;
     
-    Counters.Counter private _itemIds;
-    Counters.Counter private _itemsSold;
+    uint256 private _itemIds;
+    uint256 private _itemsSold;
     
     LXGToken public lxgToken;
     TrustScore public trustScore;
@@ -172,8 +170,7 @@ contract NFTMarketplace is Ownable, ReentrancyGuard, Pausable {
         }
         
         // Record game data
-        _itemIds.increment();
-        uint256 itemId = _itemIds.current();
+        uint256 itemId = ++_itemIds;
         
         itemGameData[itemId] = GameNFT({
             gameName: gameName,
@@ -206,8 +203,7 @@ contract NFTMarketplace is Ownable, ReentrancyGuard, Pausable {
         // Check if already listed
         require(tokenToItemId[nftContract][tokenId] == 0, "Already listed");
         
-        _itemIds.increment();
-        uint256 itemId = _itemIds.current();
+        uint256 itemId = ++_itemIds;
         
         idToMarketItem[itemId] = MarketItem(
             itemId,
@@ -282,7 +278,7 @@ contract NFTMarketplace is Ownable, ReentrancyGuard, Pausable {
         
         // Mark as sold
         item.sold = true;
-        _itemsSold.increment();
+        _itemsSold++;
         
         // Update trust scores
         trustScore.incrementTransactionCount(msg.sender);
@@ -321,8 +317,7 @@ contract NFTMarketplace is Ownable, ReentrancyGuard, Pausable {
     ) external whenNotPaused nonReentrant returns (uint256) {
         require(authorizedBridges[msg.sender] || msg.sender == owner(), "Not authorized bridge");
         
-        _itemIds.increment();
-        uint256 itemId = _itemIds.current();
+        uint256 itemId = ++_itemIds;
         
         // Create wrapped representation
         idToMarketItem[itemId] = MarketItem(
@@ -373,8 +368,8 @@ contract NFTMarketplace is Ownable, ReentrancyGuard, Pausable {
      * @dev Get all active listings
      */
     function fetchMarketItems() external view returns (MarketItem[] memory) {
-        uint256 itemCount = _itemIds.current();
-        uint256 unsoldItemCount = itemCount - _itemsSold.current();
+        uint256 itemCount = _itemIds;
+        uint256 unsoldItemCount = itemCount - _itemsSold;
         
         MarketItem[] memory items = new MarketItem[](unsoldItemCount);
         uint256 currentIndex = 0;
@@ -393,7 +388,7 @@ contract NFTMarketplace is Ownable, ReentrancyGuard, Pausable {
      * @dev Get items listed by a user
      */
     function fetchMyListings(address user) external view returns (MarketItem[] memory) {
-        uint256 itemCount = _itemIds.current();
+        uint256 itemCount = _itemIds;
         uint256 myListingCount = 0;
         
         for (uint256 i = 1; i <= itemCount; i++) {
@@ -419,7 +414,7 @@ contract NFTMarketplace is Ownable, ReentrancyGuard, Pausable {
      * @dev Get items by game
      */
     function fetchItemsByGame(string memory gameName) external view returns (MarketItem[] memory) {
-        uint256 itemCount = _itemIds.current();
+        uint256 itemCount = _itemIds;
         uint256 gameItemCount = 0;
         
         for (uint256 i = 1; i <= itemCount; i++) {

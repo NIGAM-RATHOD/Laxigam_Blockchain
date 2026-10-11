@@ -45,7 +45,7 @@ function Settings() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-white">Settings</h1>
+        <h1 className="text-3xl font-bold text-white">Settings</h1>
         <p className="text-gray-400 mt-1">Manage your account preferences</p>
       </div>
 
@@ -82,7 +82,7 @@ function Settings() {
                 <h3 className="font-semibold mb-4">General Settings</h3>
                 
                 <div className="space-y-4">
-                  <div className="flex items-center justify-between p-4 bg-[#0a0a0f] rounded-xl">
+                  <div className="flex items-center justify-between p-4 bg-black/35 rounded-xl">
                     <div>
                       <p className="font-medium">Language</p>
                       <p className="text-sm text-gray-500">Select your preferred language</p>
@@ -96,7 +96,7 @@ function Settings() {
                     </select>
                   </div>
 
-                  <div className="flex items-center justify-between p-4 bg-[#0a0a0f] rounded-xl">
+                  <div className="flex items-center justify-between p-4 bg-black/35 rounded-xl">
                     <div>
                       <p className="font-medium">Currency Display</p>
                       <p className="text-sm text-gray-500">Show fiat values in</p>
@@ -110,7 +110,7 @@ function Settings() {
                     </select>
                   </div>
 
-                  <div className="flex items-center justify-between p-4 bg-[#0a0a0f] rounded-xl">
+                  <div className="flex items-center justify-between p-4 bg-black/35 rounded-xl">
                     <div>
                       <p className="font-medium">Theme</p>
                       <p className="text-sm text-gray-500">Dark mode is always on</p>
@@ -139,7 +139,7 @@ function Settings() {
                       />
                       <button
                         onClick={copyAddress}
-                        className="p-3 rounded-xl bg-[#0a0a0f] hover:bg-white/5 transition-colors"
+                        className="p-3 rounded-xl bg-black/35 hover:bg-white/5 transition-colors"
                       >
                         {copied ? <Check className="w-5 h-5 text-green-500" /> : <Copy className="w-5 h-5" />}
                       </button>
@@ -178,7 +178,7 @@ function Settings() {
                 <h3 className="font-semibold mb-4">Security Settings</h3>
                 
                 <div className="space-y-4">
-                  <div className="flex items-center justify-between p-4 bg-[#0a0a0f] rounded-xl">
+                  <div className="flex items-center justify-between p-4 bg-black/35 rounded-xl">
                     <div>
                       <p className="font-medium">PIN Protection</p>
                       <p className="text-sm text-gray-500">Require PIN for transactions</p>
@@ -189,7 +189,7 @@ function Settings() {
                     </label>
                   </div>
 
-                  <div className="flex items-center justify-between p-4 bg-[#0a0a0f] rounded-xl">
+                  <div className="flex items-center justify-between p-4 bg-black/35 rounded-xl">
                     <div>
                       <p className="font-medium">AI Validation</p>
                       <p className="text-sm text-gray-500">Enable dual AI consensus (Gemini + Claude)</p>
@@ -200,7 +200,7 @@ function Settings() {
                     </label>
                   </div>
 
-                  <div className="flex items-center justify-between p-4 bg-[#0a0a0f] rounded-xl">
+                  <div className="flex items-center justify-between p-4 bg-black/35 rounded-xl">
                     <div>
                       <p className="font-medium">Large Transaction Alert</p>
                       <p className="text-sm text-gray-500">Notify for transactions over 1000 LXG</p>
@@ -221,7 +221,7 @@ function Settings() {
                 <h3 className="font-semibold mb-4">Notification Preferences</h3>
                 
                 <div className="space-y-4">
-                  <div className="flex items-center justify-between p-4 bg-[#0a0a0f] rounded-xl">
+                  <div className="flex items-center justify-between p-4 bg-black/35 rounded-xl">
                     <div>
                       <p className="font-medium">Transaction Notifications</p>
                       <p className="text-sm text-gray-500">Get notified for all transactions</p>
@@ -232,7 +232,7 @@ function Settings() {
                     </label>
                   </div>
 
-                  <div className="flex items-center justify-between p-4 bg-[#0a0a0f] rounded-xl">
+                  <div className="flex items-center justify-between p-4 bg-black/35 rounded-xl">
                     <div>
                       <p className="font-medium">Price Alerts</p>
                       <p className="text-sm text-gray-500">Notify when LXG price changes significantly</p>
@@ -243,7 +243,7 @@ function Settings() {
                     </label>
                   </div>
 
-                  <div className="flex items-center justify-between p-4 bg-[#0a0a0f] rounded-xl">
+                  <div className="flex items-center justify-between p-4 bg-black/35 rounded-xl">
                     <div>
                       <p className="font-medium">Game Updates</p>
                       <p className="text-sm text-gray-500">Notifications from connected games</p>
@@ -264,10 +264,10 @@ function Settings() {
                 <h3 className="font-semibold mb-4">Wallet Settings</h3>
                 
                 <div className="space-y-4">
-                  <div className="p-4 bg-[#0a0a0f] rounded-xl">
+                  <div className="p-4 bg-black/35 rounded-xl">
                     <p className="font-medium mb-2">Connected Wallet</p>
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#d4af37] to-[#b8941f] flex items-center justify-center">
+                      <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#d4af37] to-[#a8811a] flex items-center justify-center">
                         <Wallet className="w-5 h-5 text-black" />
                       </div>
                       <div>
@@ -303,7 +303,7 @@ function Settings() {
                 <h3 className="font-semibold mb-4">Connected Services</h3>
                 
                 <div className="space-y-4">
-                  <div className="flex items-center justify-between p-4 bg-[#0a0a0f] rounded-xl">
+                  <div className="flex items-center justify-between p-4 bg-black/35 rounded-xl">
                     <div className="flex items-center gap-3">
                       <span className="text-2xl">✈️</span>
                       <div>
@@ -314,7 +314,7 @@ function Settings() {
                     <span className="badge badge-success">Connected</span>
                   </div>
 
-                  <div className="flex items-center justify-between p-4 bg-[#0a0a0f] rounded-xl">
+                  <div className="flex items-center justify-between p-4 bg-black/35 rounded-xl">
                     <div className="flex items-center gap-3">
                       <span className="text-2xl">💎</span>
                       <div>
@@ -323,14 +323,14 @@ function Settings() {
                       </div>
                     </div>
                     <button
-                      onClick={() => toast.info('TON Connect coming soon!')}
+                      onClick={() => toast('TON Connect coming soon!')}
                       className="px-4 py-2 bg-[#d4af37]/20 text-[#d4af37] rounded-lg hover:bg-[#d4af37]/30 transition-colors"
                     >
                       Connect
                     </button>
                   </div>
 
-                  <div className="flex items-center justify-between p-4 bg-[#0a0a0f] rounded-xl">
+                  <div className="flex items-center justify-between p-4 bg-black/35 rounded-xl">
                     <div className="flex items-center gap-3">
                       <span className="text-2xl">🪙</span>
                       <div>

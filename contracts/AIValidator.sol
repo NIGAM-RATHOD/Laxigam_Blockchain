@@ -4,6 +4,7 @@ pragma solidity ^0.8.20;
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/Pausable.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 
 /**
  * @title IAIValidator
@@ -80,6 +81,7 @@ contract AIValidator is IAIValidator, Ownable, Pausable {
     }
 
     using ECDSA for bytes32;
+    using MessageHashUtils for bytes32;
 
     function validateSignedTransaction(
         address sender,

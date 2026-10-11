@@ -5,8 +5,10 @@ require("dotenv").config();
 /** @type import('hardhat/config').HardhatUserConfig */
 module.exports = {
   solidity: {
-    version: "0.8.20",
+    version: "0.8.24",
     settings: {
+      evmVersion: "cancun", // OpenZeppelin 5.x uses MCOPY; Polygon PoS supports Cancun
+      viaIR: true,          // TrustScore returns many values (stack too deep without IR)
       optimizer: {
         enabled: true,
         runs: 200,
@@ -17,7 +19,7 @@ module.exports = {
     hardhat: {
       chainId: 31337,
       forking: {
-        url: process.env.POLYGON_RPC_URL || "https://polygon-rpc.com",
+        url: process.env.POLYGON_RPC_URL || "https://polygon-bor-rpc.publicnode.com",
         enabled: process.env.ENABLE_FORKING === "true"
       }
     },
@@ -31,7 +33,7 @@ module.exports = {
       chainId: 11155111,
     },
     polygon: {
-      url: process.env.POLYGON_RPC_URL || "https://polygon-rpc.com",
+      url: process.env.POLYGON_RPC_URL || "https://polygon-bor-rpc.publicnode.com",
       accounts: process.env.DEPLOYER_PRIVATE_KEY ? [process.env.DEPLOYER_PRIVATE_KEY] : [],
       chainId: 137,
     },

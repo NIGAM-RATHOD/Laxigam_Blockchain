@@ -1,12 +1,31 @@
-# Laxigam Blockchain 🚀
+<p align="center">
+  <img src="./frontend/public/logo.svg" width="96" alt="Laxigam logo" />
+</p>
 
-**The Gaming-to-Bank Bridge for BRICS+ | LXG Cryptocurrency**
+<h1 align="center">Laxigam Blockchain</h1>
 
-[![Solidity](https://img.shields.io/badge/Solidity-0.8.20-blue)](https://soliditylang.org/)
-[![Polygon](https://img.shields.io/badge/Network-Polygon-purple)](https://polygon.technology/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
-[![Build](https://img.shields.io/badge/Build-Passing-brightgreen)](.)
-[![Coverage](https://img.shields.io/badge/Coverage-95%25-brightgreen)](.)
+<p align="center">
+  <b>The gaming-to-bank bridge for BRICS+</b><br/>
+  Earn in games → hold <b>LXG</b> on Polygon → cash out to UPI, PIX, QIWI or Alipay.
+</p>
+
+<p align="center">
+  <a href="https://github.com/NIGAM-RATHOD/Laxigam_Blockchain/actions/workflows/ci.yml"><img src="https://github.com/NIGAM-RATHOD/Laxigam_Blockchain/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
+  <img src="https://img.shields.io/badge/Solidity-0.8.24-363636?logo=solidity" alt="Solidity 0.8.24" />
+  <img src="https://img.shields.io/badge/Polygon-PoS-8247E5?logo=polygon&logoColor=white" alt="Polygon" />
+  <img src="https://img.shields.io/badge/FastAPI-0.115-009688?logo=fastapi&logoColor=white" alt="FastAPI" />
+  <img src="https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=black" alt="React 18" />
+  <a href="https://t.me/Laxigam_blockchain_bot"><img src="https://img.shields.io/badge/Telegram-Mini%20App-26A5E4?logo=telegram&logoColor=white" alt="Telegram Mini App" /></a>
+  <a href="./LICENSE"><img src="https://img.shields.io/badge/License-MIT-d4af37.svg" alt="MIT License" /></a>
+</p>
+
+<p align="center">
+  <a href="#-quick-start-copy-paste-setup">Quick start</a> ·
+  <a href="#-telegram-integration">Telegram bot</a> ·
+  <a href="./docs/API.md">API</a> ·
+  <a href="./CONTRIBUTING.md">Contributing</a> ·
+  <a href="./SECURITY.md">Security</a>
+</p>
 
 > 🎮 **"We turn your game earnings into real money you can spend today."**
 
@@ -381,6 +400,33 @@ Using **Stripe** for Visa, Mastercard, Amex worldwide.
 
 ## ⭐ Telegram Integration
 
+### 🤖 Bot & Mini App setup (2 minutes)
+
+Everything except creating the bot is automated by [`backend/setup_telegram.py`](./backend/setup_telegram.py):
+
+```bash
+# .env
+TELEGRAM_BOT_TOKEN=...                       # from @BotFather
+MINI_APP_URL=https://your-frontend.app       # opened by the menu button and /app
+BACKEND_PUBLIC_URL=https://your-api.app      # webhook → /telegram/webhook
+TELEGRAM_WEBHOOK_SECRET=                     # leave empty to auto-generate
+
+python backend/setup_telegram.py             # commands, descriptions, menu button, webhook
+python backend/setup_telegram.py --status    # verify webhook + menu button
+```
+
+| Command | What the bot does |
+|---------|-------------------|
+| `/start` | Welcome, your chat ID for PIN delivery, quick-action buttons |
+| `/app` | Opens the Laxigam Mini App |
+| `/balance` | Opens your wallet in the Mini App |
+| `/deposit` · `/withdraw` | Opens the Mediator (Fiat ⇄ LXG) |
+| `/transfer` | Opens game wallets |
+| `/help` | All commands and security info |
+
+Inside Telegram the frontend automatically expands, applies the Laxigam theme, wires Telegram's native **Back** button and haptics, and links your Telegram account so security PINs arrive in the bot chat. The webhook rejects any update that doesn't carry your `TELEGRAM_WEBHOOK_SECRET`.
+
+
 ### Telegram Stars (In-App Currency)
 
 **What are Telegram Stars?**
@@ -607,7 +653,8 @@ Laxigam_Blockchain/
 ├── backend/                # Python FastAPI server
 │   ├── main.py             # Main API routes
 │   ├── mediator_service.py # Mediator endpoints
-│   ├── signer.py           # Blockchain signing
+│   ├── signer.py           # Oracle signing (MediatorVault approvals)
+│   ├── setup_telegram.py   # One-shot bot + webhook configuration
 │   └── payments/           # Payment gateway handlers
 │       ├── india_upi.py
 │       ├── brazil_pix.py
@@ -616,12 +663,15 @@ Laxigam_Blockchain/
 │       ├── telegram_stars.py
 │       └── ton_network.py
 │
-├── frontend/               # React + Vite frontend
-│   └── src/pages/Mediator.jsx
+├── frontend/               # React + Vite web app & Telegram Mini App
+│   ├── src/pages/          # Landing, Dashboard, Mediator, wallets, NFTs…
+│   ├── src/components/     # Navbar, Sidebar, MobileNav, BalanceCard, ui/
+│   └── src/hooks/          # useTelegram, useNetworkStats (live Polygon RPC)
 │
 ├── scripts/deploy.js       # Deployment scripts
 ├── test/                   # Contract tests
 ├── docs/                   # Documentation
+├── .github/                # CI, issue & PR templates
 ├── hardhat.config.js       # Hardhat configuration
 └── docker-compose.yml      # Docker setup
 ```
@@ -656,11 +706,9 @@ See [Deployment Guide](./docs/DEPLOYMENT.md) for production deployment instructi
 
 ## 🤝 Contributing
 
-1. Fork the repository
-2. Create a feature branch: `git checkout -b feature/amazing-feature`
-3. Commit changes: `git commit -m 'Add amazing feature'`
-4. Push: `git push origin feature/amazing-feature`
-5. Open a Pull Request
+Contributions are welcome — new payment rails, game integrations, docs and fixes.
+Read [CONTRIBUTING.md](./CONTRIBUTING.md) for setup, commit conventions and how to add a payment rail.
+Found a vulnerability? Please follow [SECURITY.md](./SECURITY.md) instead of opening an issue.
 
 ---
 
@@ -692,14 +740,6 @@ If you find this project useful, consider supporting the development!
 
 ---
 
-## 🔗 Links
-
-- **Documentation**: [docs.laxigam.io](https://docs.laxigam.io)
-- **Discord**: [discord.gg/laxigam](https://discord.gg/laxigam)
-- **Telegram**: [@LaxigamBot](https://t.me/LaxigamBot)
-- **Twitter**: [@Laxigam](https://twitter.com/Laxigam)
-
----
 
 <p align="center">
   <b>Built with ❤️ by Nigam Rathod & the Laxigam Team</b><br>
@@ -708,4 +748,4 @@ If you find this project useful, consider supporting the development!
 
 ---
 
-*Last Updated: February 3, 2026 | Version: 1.0.0 | Status: Production Ready*
+*Last Updated: October 11, 2026 | Version: 2.1.0 | Status: Production Ready*

@@ -30,3 +30,13 @@ Thumbs.db
 # Large files
 Laxigam_Refactor_Code.zip
 Laxigam Blockchain Refactor_if any_probleam.zip
+
+# Local git mirror (history rewrite workspace)
+Laxigam_Blockchain_mirror/
+
+# Hardhat
+artifacts/
+cache/
+typechain-types/
+coverage/
+coverage.json

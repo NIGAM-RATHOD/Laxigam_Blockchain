@@ -1,199 +1,11 @@
-import React, { useState, useEffect } from 'react';
-import { ethers } from 'ethers';
+import React, { useEffect, useMemo, useState } from 'react';
+import { ArrowDown, CheckCircle2, Clock, Cpu, Loader2, ShieldCheck, XCircle, Zap } from 'lucide-react';
+import { useWalletStore } from '../store/walletStore';
+import { haptic } from '../hooks/useTelegram';
+import Flag from '../components/ui/Flag';
 
-// Styles
-const styles = {
-  container: {
-    maxWidth: '480px',
-    margin: '0 auto',
-    padding: '24px',
-    fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
-  },
-  card: {
-    background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
-    borderRadius: '20px',
-    padding: '24px',
-    marginBottom: '20px',
-    boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
-    border: '1px solid rgba(255, 255, 255, 0.1)',
-  },
-  title: {
-    fontSize: '24px',
-    fontWeight: '700',
-    color: '#fff',
-    marginBottom: '8px',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '12px',
-  },
-  subtitle: {
-    fontSize: '14px',
-    color: 'rgba(255, 255, 255, 0.6)',
-    marginBottom: '24px',
-  },
-  tabs: {
-    display: 'flex',
-    gap: '8px',
-    marginBottom: '24px',
-  },
-  tab: {
-    flex: 1,
-    padding: '12px 16px',
-    borderRadius: '12px',
-    border: 'none',
-    fontSize: '14px',
-    fontWeight: '600',
-    cursor: 'pointer',
-    transition: 'all 0.2s ease',
-  },
-  tabActive: {
-    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-    color: '#fff',
-  },
-  tabInactive: {
-    background: 'rgba(255, 255, 255, 0.1)',
-    color: 'rgba(255, 255, 255, 0.7)',
-  },
-  inputGroup: {
-    marginBottom: '20px',
-  },
-  label: {
-    display: 'block',
-    fontSize: '12px',
-    fontWeight: '600',
-    color: 'rgba(255, 255, 255, 0.7)',
-    marginBottom: '8px',
-    textTransform: 'uppercase',
-    letterSpacing: '0.5px',
-  },
-  inputWrapper: {
-    display: 'flex',
-    alignItems: 'center',
-    background: 'rgba(255, 255, 255, 0.05)',
-    borderRadius: '12px',
-    padding: '4px',
-    border: '1px solid rgba(255, 255, 255, 0.1)',
-  },
-  input: {
-    flex: 1,
-    background: 'transparent',
-    border: 'none',
-    padding: '12px 16px',
-    fontSize: '18px',
-    fontWeight: '600',
-    color: '#fff',
-    outline: 'none',
-  },
-  currencySelect: {
-    background: 'rgba(255, 255, 255, 0.1)',
-    border: 'none',
-    borderRadius: '8px',
-    padding: '8px 12px',
-    color: '#fff',
-    fontSize: '14px',
-    fontWeight: '600',
-    cursor: 'pointer',
-    marginRight: '8px',
-  },
-  paymentMethods: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(3, 1fr)',
-    gap: '8px',
-    marginBottom: '24px',
-  },
-  paymentMethod: {
-    padding: '12px',
-    borderRadius: '12px',
-    border: '2px solid transparent',
-    background: 'rgba(255, 255, 255, 0.05)',
-    cursor: 'pointer',
-    transition: 'all 0.2s ease',
-    textAlign: 'center',
-  },
-  paymentMethodSelected: {
-    borderColor: '#667eea',
-    background: 'rgba(102, 126, 234, 0.2)',
-  },
-  paymentIcon: {
-    fontSize: '24px',
-    marginBottom: '4px',
-  },
-  paymentLabel: {
-    fontSize: '11px',
-    fontWeight: '600',
-    color: 'rgba(255, 255, 255, 0.8)',
-  },
-  quoteBox: {
-    background: 'rgba(102, 126, 234, 0.1)',
-    borderRadius: '12px',
-    padding: '16px',
-    marginBottom: '24px',
-  },
-  quoteRow: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: '8px',
-  },
-  quoteLabel: {
-    fontSize: '13px',
-    color: 'rgba(255, 255, 255, 0.6)',
-  },
-  quoteValue: {
-    fontSize: '14px',
-    fontWeight: '600',
-    color: '#fff',
-  },
-  quoteHighlight: {
-    fontSize: '20px',
-    fontWeight: '700',
-    color: '#4ade80',
-  },
-  button: {
-    width: '100%',
-    padding: '16px 24px',
-    borderRadius: '14px',
-    border: 'none',
-    fontSize: '16px',
-    fontWeight: '700',
-    cursor: 'pointer',
-    transition: 'all 0.2s ease',
-    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-    color: '#fff',
-  },
-  buttonDisabled: {
-    opacity: 0.5,
-    cursor: 'not-allowed',
-  },
-  statusBox: {
-    background: 'rgba(74, 222, 128, 0.1)',
-    border: '1px solid rgba(74, 222, 128, 0.3)',
-    borderRadius: '12px',
-    padding: '16px',
-    marginBottom: '20px',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '12px',
-  },
-  statusIcon: {
-    fontSize: '24px',
-  },
-  statusText: {
-    flex: 1,
-  },
-  statusTitle: {
-    fontSize: '14px',
-    fontWeight: '600',
-    color: '#4ade80',
-    marginBottom: '4px',
-  },
-  statusDesc: {
-    fontSize: '12px',
-    color: 'rgba(255, 255, 255, 0.6)',
-  },
-};
+const API_BASE = import.meta.env.VITE_API_URL || '';
 
-// Payment method icons
 const PAYMENT_METHODS = {
   deposit: [
     { id: 'UPI', icon: '🇮🇳', label: 'UPI', currency: 'INR' },
@@ -211,336 +23,246 @@ const PAYMENT_METHODS = {
   ],
 };
 
-// Exchange rates (mock - would come from API)
-const EXCHANGE_RATES = {
-  INR: 83.0,
-  BRL: 5.0,
-  RUB: 92.0,
-  CNY: 7.2,
-  USD: 1.0,
+const DESTINATION = {
+  UPI: { label: 'UPI ID', placeholder: 'yourname@upi' },
+  PIX: { label: 'PIX key', placeholder: 'CPF, phone or email' },
+  QIWI: { label: 'QIWI phone', placeholder: '+79001234567' },
+  ALIPAY: { label: 'Alipay account', placeholder: 'alipay@account.com' },
 };
 
+// Indicative rates; the backend quote is authoritative
+const EXCHANGE_RATES = { INR: 83.0, BRL: 5.0, RUB: 92.0, CNY: 7.2, USD: 1.0 };
 const LXG_USD_RATE = 0.05;
+const FEES = { deposit: 0.005, withdraw: 0.01 };
 
-export default function MediatorApp() {
-  const [mode, setMode] = useState('deposit'); // 'deposit' or 'withdraw'
+export default function Mediator() {
+  const { address, telegramChatId } = useWalletStore();
+  const [mode, setMode] = useState('deposit');
   const [amount, setAmount] = useState('');
-  const [currency, setCurrency] = useState('INR');
   const [paymentMethod, setPaymentMethod] = useState('UPI');
-  const [destination, setDestination] = useState(''); // For withdrawals
-  const [quote, setQuote] = useState(null);
+  const [destination, setDestination] = useState('');
   const [status, setStatus] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [walletAddress, setWalletAddress] = useState('');
 
-  // Connect wallet
-  const connectWallet = async () => {
-    if (typeof window.ethereum !== 'undefined') {
-      try {
-        const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-        setWalletAddress(accounts[0]);
-      } catch (err) {
-        console.error('Failed to connect wallet:', err);
-      }
-    } else {
-      alert('Please install MetaMask!');
-    }
-  };
+  const currency = PAYMENT_METHODS[mode].find((m) => m.id === paymentMethod)?.currency || 'USD';
 
-  // Calculate quote when inputs change
-  useEffect(() => {
-    if (!amount || parseFloat(amount) <= 0) {
-      setQuote(null);
-      return;
-    }
-
-    const amountNum = parseFloat(amount);
+  const quote = useMemo(() => {
+    const value = parseFloat(amount);
+    if (!value || value <= 0) return null;
     const rate = EXCHANGE_RATES[currency] || 1;
 
     if (mode === 'deposit') {
-      // Fiat -> LXG
-      const usdAmount = amountNum / rate;
-      const lxgAmount = usdAmount / LXG_USD_RATE;
-      const fee = lxgAmount * 0.005; // 0.5%
-      const netAmount = lxgAmount - fee;
-
-      setQuote({
-        input: amountNum,
-        inputCurrency: currency,
-        output: netAmount.toFixed(2),
-        outputCurrency: 'LXG',
-        fee: fee.toFixed(4),
-        feeCurrency: 'LXG',
-        rate: `1 ${currency} = ${(1 / rate / LXG_USD_RATE).toFixed(4)} LXG`,
-      });
-    } else {
-      // LXG -> Fiat
-      const usdAmount = amountNum * LXG_USD_RATE;
-      const fiatAmount = usdAmount * rate;
-      const fee = fiatAmount * 0.01; // 1%
-      const netAmount = fiatAmount - fee;
-
-      setQuote({
-        input: amountNum,
-        inputCurrency: 'LXG',
-        output: netAmount.toFixed(2),
-        outputCurrency: currency,
-        fee: fee.toFixed(2),
-        feeCurrency: currency,
-        rate: `1 LXG = ${(LXG_USD_RATE * rate).toFixed(2)} ${currency}`,
-      });
+      const gross = value / rate / LXG_USD_RATE;
+      const fee = gross * FEES.deposit;
+      return { pay: `${value.toLocaleString()} ${currency}`, fee: `${fee.toFixed(4)} LXG`, receive: (gross - fee).toFixed(2), receiveUnit: 'LXG', rate: `1 ${currency} = ${(1 / rate / LXG_USD_RATE).toFixed(4)} LXG` };
     }
+    const gross = value * LXG_USD_RATE * rate;
+    const fee = gross * FEES.withdraw;
+    return { pay: `${value.toLocaleString()} LXG`, fee: `${fee.toFixed(2)} ${currency}`, receive: (gross - fee).toFixed(2), receiveUnit: currency, rate: `1 LXG = ${(LXG_USD_RATE * rate).toFixed(2)} ${currency}` };
   }, [amount, currency, mode]);
 
-  // Update currency when payment method changes
   useEffect(() => {
-    const methods = PAYMENT_METHODS[mode];
-    const method = methods.find(m => m.id === paymentMethod);
-    if (method) {
-      setCurrency(method.currency);
-    }
-  }, [paymentMethod, mode]);
+    setStatus(null);
+  }, [mode, paymentMethod]);
 
-  // Handle submit
+  const switchMode = (next) => {
+    haptic();
+    setMode(next);
+    setPaymentMethod('UPI');
+    setAmount('');
+  };
+
   const handleSubmit = async () => {
-    if (!walletAddress) {
-      await connectWallet();
-      return;
-    }
-
     if (!quote) return;
-
+    haptic('medium');
     setLoading(true);
-    setStatus({ type: 'processing', message: 'Processing your request...' });
+    setStatus({ type: 'processing', message: 'Running AI validation and creating your order…' });
 
     try {
-      const endpoint = mode === 'deposit' 
-        ? '/api/mediator/deposit/initiate'
-        : '/api/mediator/withdraw/initiate';
-
-      const body = mode === 'deposit' ? {
-        wallet_address: walletAddress,
-        payment_method: paymentMethod,
-        amount_fiat: parseFloat(amount),
-        currency: currency,
-      } : {
-        wallet_address: walletAddress,
-        amount_lxg: parseFloat(amount),
-        payment_method: paymentMethod,
-        destination: destination,
-        currency: currency,
-      };
-
-      const response = await fetch(endpoint, {
+      const isDeposit = mode === 'deposit';
+      const response = await fetch(`${API_BASE}/api/mediator/${isDeposit ? 'deposit' : 'withdraw'}/initiate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
+        body: JSON.stringify(
+          isDeposit
+            ? { wallet_address: address, payment_method: paymentMethod, amount_fiat: parseFloat(amount), currency, telegram_id: telegramChatId ? Number(telegramChatId) : null }
+            : { wallet_address: address, amount_lxg: parseFloat(amount), payment_method: paymentMethod, destination, currency, telegram_id: telegramChatId ? Number(telegramChatId) : null }
+        ),
       });
-
       const data = await response.json();
+      if (!response.ok || !data.success) throw new Error(data.detail || data.error || 'Request failed');
 
-      if (data.success) {
-        setStatus({
-          type: 'success',
-          message: mode === 'deposit' 
-            ? 'Payment initiated! Complete the payment using the instructions below.'
-            : 'Withdrawal initiated! Sign the transaction in your wallet.',
-          data: data,
-        });
-      } else {
-        throw new Error(data.error || 'Request failed');
-      }
-    } catch (err) {
       setStatus({
-        type: 'error',
-        message: err.message || 'Something went wrong. Please try again.',
+        type: 'success',
+        message: isDeposit
+          ? 'Order created. Complete the payment using the instructions from your payment app.'
+          : 'Withdrawal approved. Sign the transaction in your wallet to lock your LXG.',
       });
+    } catch (err) {
+      setStatus({ type: 'error', message: err.message === 'Failed to fetch' ? 'Cannot reach the Laxigam API. Is the backend running?' : err.message });
     } finally {
       setLoading(false);
     }
   };
 
+  const needsDestination = mode === 'withdraw' && !destination.trim();
+
   return (
-    <div style={styles.container}>
-      {/* Header Card */}
-      <div style={styles.card}>
-        <div style={styles.title}>
-          <span>💱</span>
-          <span>Laxigam Mediator</span>
-        </div>
-        <div style={styles.subtitle}>
-          Convert between LXG and your local currency instantly
-        </div>
+    <div className="max-w-xl mx-auto space-y-5">
+      <div className="text-center">
+        <p className="eyebrow">Mediator</p>
+        <h1 className="text-3xl font-bold mt-1">
+          {mode === 'deposit' ? 'Buy' : 'Sell'} <span className="gradient-text">LXG</span>
+        </h1>
+        <p className="text-gray-400 mt-2 text-sm">Convert between LXG and your local currency on BRICS+ payment rails.</p>
+      </div>
 
-        {/* Mode Tabs */}
-        <div style={styles.tabs}>
-          <button
-            style={{ ...styles.tab, ...(mode === 'deposit' ? styles.tabActive : styles.tabInactive) }}
-            onClick={() => { setMode('deposit'); setPaymentMethod('UPI'); setAmount(''); }}
-          >
-            💰 Buy LXG
-          </button>
-          <button
-            style={{ ...styles.tab, ...(mode === 'withdraw' ? styles.tabActive : styles.tabInactive) }}
-            onClick={() => { setMode('withdraw'); setPaymentMethod('UPI'); setAmount(''); }}
-          >
-            💵 Sell LXG
-          </button>
-        </div>
-
-        {/* Payment Methods */}
-        <div style={styles.label}>Payment Method</div>
-        <div style={styles.paymentMethods}>
-          {PAYMENT_METHODS[mode].map(method => (
-            <div
-              key={method.id}
-              style={{
-                ...styles.paymentMethod,
-                ...(paymentMethod === method.id ? styles.paymentMethodSelected : {}),
-              }}
-              onClick={() => setPaymentMethod(method.id)}
+      <div className="card !p-5 sm:!p-6">
+        {/* Mode switch */}
+        <div className="relative grid grid-cols-2 p-1 rounded-2xl surface-inset mb-6">
+          <span
+            className="absolute top-1 bottom-1 w-[calc(50%-4px)] rounded-xl btn-primary !p-0 transition-transform duration-300"
+            style={{ transform: mode === 'deposit' ? 'translateX(4px)' : 'translateX(calc(100% + 4px))', left: 0 }}
+          />
+          {['deposit', 'withdraw'].map((m) => (
+            <button
+              key={m}
+              onClick={() => switchMode(m)}
+              className={`relative z-10 py-2.5 text-sm font-semibold transition-colors ${mode === m ? 'text-[#1a1306]' : 'text-gray-400 hover:text-white'}`}
             >
-              <div style={styles.paymentIcon}>{method.icon}</div>
-              <div style={styles.paymentLabel}>{method.label}</div>
-            </div>
+              {m === 'deposit' ? 'Buy LXG' : 'Sell LXG'}
+            </button>
           ))}
         </div>
 
-        {/* Amount Input */}
-        <div style={styles.inputGroup}>
-          <div style={styles.label}>
-            {mode === 'deposit' ? 'You Pay' : 'You Sell'}
+        {/* Methods */}
+        <p className="eyebrow mb-3">Payment rail</p>
+        <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 mb-6">
+          {PAYMENT_METHODS[mode].map((method) => (
+            <button
+              key={method.id}
+              onClick={() => {
+                haptic();
+                setPaymentMethod(method.id);
+              }}
+              className={`payment-method-card !p-3 flex-col !items-center gap-1 ${paymentMethod === method.id ? 'selected' : ''}`}
+            >
+              <Flag emoji={method.icon} size={22} />
+              <span className="text-xs font-semibold">{method.label}</span>
+            </button>
+          ))}
+        </div>
+
+        {/* Amount */}
+        <div className="surface-inset p-4">
+          <div className="flex items-center justify-between text-xs text-gray-500 mb-2">
+            <span>{mode === 'deposit' ? 'You pay' : 'You sell'}</span>
+            <span>{mode === 'deposit' ? PAYMENT_METHODS.deposit.find((m) => m.id === paymentMethod)?.label : 'from Real Wallet'}</span>
           </div>
-          <div style={styles.inputWrapper}>
+          <div className="flex items-center gap-3">
             <input
               type="number"
-              style={styles.input}
+              inputMode="decimal"
+              min="0"
               placeholder="0.00"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
+              className="flex-1 min-w-0 bg-transparent text-3xl font-bold font-display outline-none placeholder:text-gray-700 tabular"
             />
-            <select
-              style={styles.currencySelect}
-              value={currency}
-              onChange={(e) => setCurrency(e.target.value)}
-            >
-              {mode === 'deposit' ? (
-                <>
-                  <option value="INR">INR</option>
-                  <option value="BRL">BRL</option>
-                  <option value="RUB">RUB</option>
-                  <option value="CNY">CNY</option>
-                  <option value="USD">USD</option>
-                </>
-              ) : (
-                <option value="LXG">LXG</option>
-              )}
-            </select>
+            <span className="px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 font-semibold text-sm">{mode === 'deposit' ? currency : 'LXG'}</span>
           </div>
         </div>
 
-        {/* Destination (for withdrawals) */}
+        <div className="flex justify-center -my-3 relative z-10">
+          <div className="w-10 h-10 rounded-xl bg-[#12121c] border border-[#d4af37]/30 flex items-center justify-center shadow-lg">
+            <ArrowDown className="w-4 h-4 text-[#f6e27a]" />
+          </div>
+        </div>
+
+        <div className="surface-inset p-4 mb-5">
+          <div className="text-xs text-gray-500 mb-2">You receive</div>
+          <div className="flex items-center gap-3">
+            <span className={`flex-1 text-3xl font-bold font-display tabular ${quote ? 'gradient-text' : 'text-gray-700'}`}>{quote ? Number(quote.receive).toLocaleString(undefined, { minimumFractionDigits: 2 }) : '0.00'}</span>
+            <span className="px-3 py-1.5 rounded-xl bg-[#d4af37]/10 border border-[#d4af37]/30 font-semibold text-sm text-[#f6e27a]">{mode === 'deposit' ? 'LXG' : currency}</span>
+          </div>
+        </div>
+
         {mode === 'withdraw' && (
-          <div style={styles.inputGroup}>
-            <div style={styles.label}>
-              {paymentMethod === 'UPI' ? 'UPI ID' :
-               paymentMethod === 'PIX' ? 'PIX Key' :
-               paymentMethod === 'QIWI' ? 'Phone Number' :
-               'Alipay Account'}
-            </div>
-            <div style={styles.inputWrapper}>
-              <input
-                type="text"
-                style={styles.input}
-                placeholder={
-                  paymentMethod === 'UPI' ? 'yourname@upi' :
-                  paymentMethod === 'PIX' ? 'CPF or email' :
-                  paymentMethod === 'QIWI' ? '+79001234567' :
-                  'alipay@account.com'
-                }
-                value={destination}
-                onChange={(e) => setDestination(e.target.value)}
-              />
-            </div>
+          <div className="mb-5">
+            <label className="eyebrow block mb-2">{DESTINATION[paymentMethod].label}</label>
+            <input type="text" className="input" placeholder={DESTINATION[paymentMethod].placeholder} value={destination} onChange={(e) => setDestination(e.target.value)} />
           </div>
         )}
 
-        {/* Quote Box */}
         {quote && (
-          <div style={styles.quoteBox}>
-            <div style={styles.quoteRow}>
-              <span style={styles.quoteLabel}>You {mode === 'deposit' ? 'pay' : 'sell'}</span>
-              <span style={styles.quoteValue}>
-                {quote.input} {quote.inputCurrency}
-              </span>
-            </div>
-            <div style={styles.quoteRow}>
-              <span style={styles.quoteLabel}>Fee</span>
-              <span style={styles.quoteValue}>
-                {quote.fee} {quote.feeCurrency}
-              </span>
-            </div>
-            <div style={styles.quoteRow}>
-              <span style={styles.quoteLabel}>You {mode === 'deposit' ? 'receive' : 'get'}</span>
-              <span style={styles.quoteHighlight}>
-                {quote.output} {quote.outputCurrency}
-              </span>
-            </div>
-            <div style={{ ...styles.quoteRow, marginBottom: 0, marginTop: '8px', paddingTop: '8px', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
-              <span style={styles.quoteLabel}>Rate</span>
-              <span style={styles.quoteValue}>{quote.rate}</span>
-            </div>
+          <div className="space-y-2 text-sm mb-5 px-1">
+            <Row label="Rate" value={quote.rate} />
+            <Row label={`Fee (${FEES[mode] * 100}%)`} value={quote.fee} />
+            <Row label="Settlement" value={mode === 'deposit' ? '~30 seconds after payment' : 'Within 24 hours'} />
           </div>
         )}
 
-        {/* Status */}
-        {status && (
-          <div style={{
-            ...styles.statusBox,
-            background: status.type === 'error' ? 'rgba(239, 68, 68, 0.1)' : 'rgba(74, 222, 128, 0.1)',
-            borderColor: status.type === 'error' ? 'rgba(239, 68, 68, 0.3)' : 'rgba(74, 222, 128, 0.3)',
-          }}>
-            <div style={styles.statusIcon}>
-              {status.type === 'success' ? '✅' : status.type === 'error' ? '❌' : '⏳'}
-            </div>
-            <div style={styles.statusText}>
-              <div style={{ ...styles.statusTitle, color: status.type === 'error' ? '#ef4444' : '#4ade80' }}>
-                {status.type === 'success' ? 'Success!' : status.type === 'error' ? 'Error' : 'Processing...'}
-              </div>
-              <div style={styles.statusDesc}>{status.message}</div>
-            </div>
-          </div>
-        )}
+        {status && <StatusBox status={status} />}
 
-        {/* Submit Button */}
-        <button
-          style={{
-            ...styles.button,
-            ...(loading || !amount ? styles.buttonDisabled : {}),
-          }}
-          onClick={handleSubmit}
-          disabled={loading || !amount}
-        >
-          {!walletAddress 
-            ? '🔗 Connect Wallet'
-            : loading 
-              ? '⏳ Processing...'
-              : mode === 'deposit' 
-                ? `💰 Buy ${quote?.output || ''} LXG`
-                : `💵 Sell ${amount || ''} LXG`
-          }
+        <button onClick={handleSubmit} disabled={loading || !quote || needsDestination} className="btn-primary w-full !py-4 text-base">
+          {loading ? (
+            <>
+              <Loader2 className="w-5 h-5 animate-spin" /> Processing…
+            </>
+          ) : !quote ? (
+            'Enter an amount'
+          ) : needsDestination ? (
+            `Enter your ${DESTINATION[paymentMethod].label}`
+          ) : mode === 'deposit' ? (
+            `Buy ${Number(quote.receive).toLocaleString()} LXG`
+          ) : (
+            `Sell ${Number(amount).toLocaleString()} LXG`
+          )}
         </button>
       </div>
 
-      {/* Info Card */}
-      <div style={{ ...styles.card, padding: '16px' }}>
-        <div style={{ fontSize: '12px', color: 'rgba(255, 255, 255, 0.6)', lineHeight: 1.6 }}>
-          <strong>🔐 Secure & Fast</strong><br />
-          • AI-validated transactions<br />
-          • Instant settlements via BRICS payment rails<br />
-          • Low fees: 0.5% deposit, 1% withdrawal
-        </div>
+      <div className="grid grid-cols-3 gap-3 text-center">
+        <Assurance icon={Cpu} title="Dual-AI" body="Gemini + Claude" />
+        <Assurance icon={ShieldCheck} title="Vault-locked" body="MediatorVault" />
+        <Assurance icon={Zap} title="Low fees" body="0.5% · 1%" />
       </div>
+    </div>
+  );
+}
+
+function Row({ label, value }) {
+  return (
+    <div className="flex items-center justify-between">
+      <span className="text-gray-500">{label}</span>
+      <span className="font-medium text-gray-200 tabular">{value}</span>
+    </div>
+  );
+}
+
+function StatusBox({ status }) {
+  const variants = {
+    processing: { icon: Clock, cls: 'border-sky-500/30 bg-sky-500/10 text-sky-300', title: 'Processing' },
+    success: { icon: CheckCircle2, cls: 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300', title: 'Success' },
+    error: { icon: XCircle, cls: 'border-rose-500/30 bg-rose-500/10 text-rose-300', title: 'Something went wrong' },
+  };
+  const variant = variants[status.type];
+  return (
+    <div className={`flex gap-3 p-4 rounded-2xl border mb-5 animate-rise ${variant.cls}`}>
+      <variant.icon className={`w-5 h-5 shrink-0 mt-0.5 ${status.type === 'processing' ? 'animate-pulse' : ''}`} />
+      <div>
+        <p className="font-semibold text-sm">{variant.title}</p>
+        <p className="text-sm text-gray-300/80 mt-0.5">{status.message}</p>
+      </div>
+    </div>
+  );
+}
+
+function Assurance({ icon: Icon, title, body }) {
+  return (
+    <div className="card !p-3">
+      <Icon className="w-5 h-5 mx-auto text-[#d4af37]" />
+      <p className="text-xs font-semibold mt-2">{title}</p>
+      <p className="text-[11px] text-gray-500">{body}</p>
     </div>
   );
 }

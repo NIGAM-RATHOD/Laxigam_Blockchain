@@ -19,13 +19,13 @@ import json
 import time
 import os
 
-# Import payment handlers
-from payments.india_upi import UPIPaymentHandler
-from payments.brazil_pix import PIXPaymentHandler
-from payments.russia_qiwi import QIWIPaymentHandler
-from payments.china_alipay import AlipayPaymentHandler
-from payments.telegram_stars import TelegramStarsHandler
-from payments.ton_network import TONNetworkHandler
+# Import payment gateways
+from payments.india_upi import UPIPayment
+from payments.brazil_pix import PIXPayment
+from payments.russia_qiwi import QIWIPayment
+from payments.china_alipay import AlipayPayment
+from payments.telegram_stars import TelegramStarsPayment
+from payments.ton_network import TONNetwork
 
 # Blockchain signer
 from signer import sign_mediator_transaction
@@ -45,15 +45,50 @@ EXCHANGE_RATES = {
     "ZAR": 18.5,
 }
 
-# Payment handlers mapping
-PAYMENT_HANDLERS = {
-    "UPI": UPIPaymentHandler,
-    "PIX": PIXPaymentHandler,
-    "QIWI": QIWIPaymentHandler,
-    "ALIPAY": AlipayPaymentHandler,
-    "STARS": TelegramStarsHandler,
-    "TON": TONNetworkHandler,
-}
+STARS_PER_USD = float(os.getenv("STARS_PER_USD", "50"))  # Telegram Stars per USD
+TON_USD_RATE = float(os.getenv("TON_USD_RATE", "5.0"))   # USD per TON
+
+SUPPORTED_DEPOSIT_METHODS = {"UPI", "PIX", "QIWI", "ALIPAY", "STARS", "TON"}
+
+
+async def create_gateway_payment(
+    method: str,
+    payment_id: str,
+    amount: float,
+    currency: str,
+    user_wallet: str,
+    lxg_amount: float,
+    telegram_id: Optional[int] = None,
+) -> Dict[str, Any]:
+    """Route a deposit to the matching gateway, adapting each gateway's own signature."""
+    description = f"Laxigam: {lxg_amount:,.2f} LXG ({payment_id[:8]})"
+    usd_amount = amount / EXCHANGE_RATES.get(currency.upper(), 1.0)
+
+    if method == "UPI":
+        return await UPIPayment().create_upi_payment(user_id=user_wallet, amount_inr=amount, description=description)
+    if method == "PIX":
+        return await PIXPayment().create_pix_payment(user_id=user_wallet, amount_brl=amount, description=description)
+    if method == "QIWI":
+        return await QIWIPayment().create_qiwi_payment(user_id=user_wallet, amount_rub=amount, description=description)
+    if method == "ALIPAY":
+        return await AlipayPayment().create_alipay_payment(user_id=user_wallet, amount_cny=amount, subject=description)
+    if method == "STARS":
+        if not telegram_id:
+            raise HTTPException(400, "Telegram Stars deposits must be started from the Telegram Mini App")
+        return await TelegramStarsPayment().create_stars_invoice(
+            chat_id=telegram_id,
+            title="Buy LXG",
+            description=description,
+            stars_amount=max(1, round(usd_amount * STARS_PER_USD)),
+            payload=payment_id,
+        )
+    if method == "TON":
+        return await TONNetwork().create_ton_deposit(
+            user_id=user_wallet,
+            ton_amount=round(usd_amount / TON_USD_RATE, 4),
+            user_ton_address=user_wallet,
+        )
+    raise HTTPException(400, f"Unsupported payment method: {method}")
 
 # ═══════════════════════════════════════════════════════════════════════════
 # Pydantic Models
@@ -115,7 +150,7 @@ def generate_payment_id() -> str:
 # API Endpoints
 # ═══════════════════════════════════════════════════════════════════════════
 
-@router.get("/quote")
+@router.post("/quote")
 async def get_quote(request: QuoteRequest):
     """
     Get a quote for fiat <-> LXG conversion
@@ -168,7 +203,7 @@ async def initiate_deposit(request: DepositInitRequest, background_tasks: Backgr
     """
     # Validate payment method
     payment_method = request.payment_method.upper()
-    if payment_method not in PAYMENT_HANDLERS:
+    if payment_method not in SUPPORTED_DEPOSIT_METHODS:
         raise HTTPException(400, f"Unsupported payment method: {payment_method}")
     
     # Calculate LXG amount
@@ -182,16 +217,15 @@ async def initiate_deposit(request: DepositInitRequest, background_tasks: Backgr
     # Generate payment ID
     payment_id = generate_payment_id()
     
-    # Initialize payment handler
-    handler = PAYMENT_HANDLERS[payment_method]()
-    
     # Create payment with gateway
-    payment_result = await handler.create_payment(
+    payment_result = await create_gateway_payment(
+        method=payment_method,
         payment_id=payment_id,
         amount=request.amount_fiat,
         currency=request.currency,
         user_wallet=request.wallet_address,
-        lxg_amount=lxg_amount
+        lxg_amount=lxg_amount,
+        telegram_id=request.telegram_id,
     )
     
     # Store in database (would call db_pool.acquire() in real implementation)
@@ -286,7 +320,7 @@ async def initiate_withdrawal(request: WithdrawRequest, background_tasks: Backgr
         amount_lxg=int(request.amount_lxg * 10**18),  # Convert to wei
         destination=request.destination,
         currency=request.currency,
-        amount_fiat=fiat_amount,
+        amount_fiat=int(round(fiat_amount * 100)),  # minor units (paise/centavos/kopecks)
         nonce=nonce
     )
     

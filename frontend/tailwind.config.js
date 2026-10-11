@@ -8,15 +8,17 @@ export default {
     extend: {
       colors: {
         'laxigam': {
-          dark: '#0a0a0f',
-          card: '#1a1a2e',
-          'card-light': '#252542',
+          dark: '#07070b',
+          card: '#12121c',
+          'card-light': '#1a1a28',
           gold: '#d4af37',
-          'gold-dark': '#b8941f',
+          'gold-light': '#f6e27a',
+          'gold-dark': '#a8811a',
         }
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+        display: ['Space Grotesk', 'Inter', 'sans-serif'],
         mono: ['JetBrains Mono', 'Fira Code', 'monospace'],
       },
       animation: {

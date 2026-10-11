@@ -6,6 +6,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/Pausable.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 
 /**
  * @title MediatorVault
@@ -23,6 +24,7 @@ import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
  */
 contract MediatorVault is Ownable, ReentrancyGuard, Pausable {
     using ECDSA for bytes32;
+    using MessageHashUtils for bytes32;
 
     IERC20 public lxgToken;
     
@@ -138,7 +140,7 @@ contract MediatorVault is Ownable, ReentrancyGuard, Pausable {
     ) external onlyOracle whenNotPaused {
         require(user != address(0), "Invalid user address");
         require(amountLXG >= minDeposit, "Amount below minimum");
-        require(!pendingDeposits[paymentId].user != address(0), "Payment ID already used");
+        require(pendingDeposits[paymentId].user == address(0), "Payment ID already used");
         
         pendingDeposits[paymentId] = DepositRequest({
             user: user,

@@ -1,299 +1,281 @@
 import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { Area, AreaChart, ResponsiveContainer, Tooltip, YAxis } from 'recharts';
 import {
-  Wallet,
-  Gamepad2,
-  TrendingUp,
-  Shield,
+  Activity,
+  ArrowDownLeft,
+  ArrowLeftRight,
   ArrowRight,
-  Zap,
-  Globe,
-  Cpu
+  ArrowUpRight,
+  Gamepad2,
+  History,
+  Send,
+  Shield,
+  TrendingUp,
+  Wallet,
 } from 'lucide-react';
+import BalanceCard from '../components/BalanceCard';
+import Spotlight from '../components/ui/Spotlight';
+import AnimatedNumber from '../components/ui/AnimatedNumber';
+import { useNetworkStats, NETWORK_NAMES } from '../hooks/useNetworkStats';
 import { useWalletStore, useExchangeStore } from '../store/walletStore';
+import { TELEGRAM_URL } from '../config';
+
+const greeting = () => {
+  const hour = new Date().getHours();
+  return hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
+};
+
+const TX_STYLE = {
+  deposit: { icon: ArrowDownLeft, tone: 'text-emerald-400 bg-emerald-500/10 ring-emerald-500/20', sign: '+' },
+  withdraw: { icon: ArrowUpRight, tone: 'text-rose-400 bg-rose-500/10 ring-rose-500/20', sign: '−' },
+  default: { icon: Gamepad2, tone: 'text-sky-400 bg-sky-500/10 ring-sky-500/20', sign: '−' },
+};
 
 function Dashboard() {
-  const { address, realBalance, gameBalances, trustScore, transactions } = useWalletStore();
+  const { address, realBalance, gameBalances, trustScore, transactions, telegramChatId } = useWalletStore();
   const { lxgUsdRate, fetchRates } = useExchangeStore();
+  const network = useNetworkStats();
 
   useEffect(() => {
     fetchRates();
-  }, []);
+  }, [fetchRates]);
 
   const totalGameBalance = Object.values(gameBalances).reduce((a, b) => a + b, 0);
   const totalBalance = realBalance + totalGameBalance;
-  const usdValue = totalBalance * lxgUsdRate;
-
-  const stats = [
-    {
-      title: 'Total Balance',
-      value: `${totalBalance.toFixed(2)} LXG`,
-      subValue: `~$${usdValue.toFixed(2)} USD`,
-      icon: Wallet,
-      color: 'from-[#d4af37] to-[#b8941f]'
-    },
-    {
-      title: 'Real Wallet',
-      value: `${realBalance.toFixed(2)} LXG`,
-      subValue: 'Available for withdrawal',
-      icon: Wallet,
-      color: 'from-green-500 to-green-600'
-    },
-    {
-      title: 'Game Wallets',
-      value: `${totalGameBalance.toFixed(2)} LXG`,
-      subValue: `${Object.keys(gameBalances).length} games connected`,
-      icon: Gamepad2,
-      color: 'from-blue-500 to-blue-600'
-    },
-    {
-      title: 'Trust Score',
-      value: `${trustScore}/100`,
-      subValue: trustScore >= 70 ? 'Excellent' : trustScore >= 30 ? 'Good' : 'Building',
-      icon: Shield,
-      color: trustScore >= 70 ? 'from-green-500 to-green-600' : trustScore >= 30 ? 'from-yellow-500 to-yellow-600' : 'from-red-500 to-red-600'
-    }
-  ];
-
   const recentTransactions = transactions.slice(0, 5);
+  const trustTier = trustScore >= 70 ? { label: 'Excellent', color: '#22c55e' } : trustScore >= 30 ? { label: 'Good', color: '#eab308' } : { label: 'Building', color: '#ef4444' };
 
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-white">Dashboard</h1>
-          <p className="text-gray-400 mt-1">
-            Welcome back! Here's your Laxigam overview.
-          </p>
+          <p className="eyebrow">{greeting()}</p>
+          <h1 className="text-3xl font-bold text-white mt-1">Your Laxigam overview</h1>
         </div>
         <div className="flex gap-3">
-          <Link
-            to="/deposit"
-            className="btn-primary"
-          >
-            <TrendingUp className="w-4 h-4" />
-            Deposit
+          <Link to="/mediator" className="btn-primary">
+            <ArrowLeftRight className="w-4 h-4" /> Buy / Sell LXG
           </Link>
-          <Link
-            to="/withdraw"
-            className="btn-secondary"
-          >
-            <Zap className="w-4 h-4" />
-            Withdraw
+          <Link to="/withdraw" className="btn-secondary">
+            <ArrowUpRight className="w-4 h-4" /> Withdraw
           </Link>
         </div>
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {stats.map((stat, index) => {
-          const Icon = stat.icon;
-          return (
-            <div key={index} className="card">
-              <div className="flex items-start justify-between">
-                <div>
-                  <p className="text-sm text-gray-400">{stat.title}</p>
-                  <p className="text-2xl font-bold mt-1">{stat.value}</p>
-                  <p className="text-xs text-gray-500 mt-1">{stat.subValue}</p>
-                </div>
-                <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${stat.color} flex items-center justify-center`}>
-                  <Icon className="w-5 h-5 text-white" />
-                </div>
-              </div>
-            </div>
-          );
-        })}
+      {/* Hero row */}
+      <div className="grid grid-cols-1 xl:grid-cols-[1.4fr_1fr] gap-6">
+        <BalanceCard address={address} totalBalance={totalBalance} usdValue={totalBalance * lxgUsdRate} />
+
+        <div className="grid grid-cols-2 gap-4">
+          <MiniStat icon={Wallet} label="Real wallet" value={<AnimatedNumber value={realBalance} />} hint="Withdrawable" accent="from-emerald-400/20" />
+          <MiniStat icon={Gamepad2} label="Game wallets" value={<AnimatedNumber value={totalGameBalance} />} hint={`${Object.keys(gameBalances).length} games linked`} accent="from-sky-400/20" />
+          <MiniStat icon={TrendingUp} label="LXG price" value={<AnimatedNumber value={lxgUsdRate} decimals={3} prefix="$" />} hint="Oracle rate" accent="from-[#d4af37]/25" />
+          <TrustRing score={trustScore} tier={trustTier} />
+        </div>
       </div>
 
-      {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Game Wallets */}
-        <div className="lg:col-span-2 card">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold">Game Wallets</h2>
-            <Link to="/game-wallet" className="text-[#d4af37] text-sm flex items-center gap-1 hover:underline">
-              View All <ArrowRight className="w-4 h-4" />
-            </Link>
+      {/* Telegram link prompt */}
+      {!telegramChatId && (
+        <div className="card !py-4 flex flex-col sm:flex-row sm:items-center gap-4 !border-sky-500/20 bg-gradient-to-r from-sky-500/[0.07] to-transparent">
+          <div className="w-10 h-10 rounded-xl bg-sky-500/15 flex items-center justify-center shrink-0">
+            <Send className="w-5 h-5 text-sky-400" />
           </div>
-          
+          <div className="flex-1">
+            <p className="font-semibold">Link Telegram to unlock withdrawals</p>
+            <p className="text-sm text-gray-400">Security PINs and payout receipts are delivered to your Telegram chat.</p>
+          </div>
+          <div className="flex gap-2">
+            <a href={TELEGRAM_URL} target="_blank" rel="noopener noreferrer" className="btn-secondary !py-2 text-sm">Open bot</a>
+            <Link to="/settings" className="btn-primary !py-2 text-sm">Link chat ID</Link>
+          </div>
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Game wallets */}
+        <Spotlight className="lg:col-span-2">
+          <SectionHeader title="Game wallets" to="/game-wallet" />
           {Object.keys(gameBalances).length > 0 ? (
-            <div className="space-y-3">
+            <div className="space-y-2">
               {Object.entries(gameBalances).map(([game, balance]) => (
-                <div
-                  key={game}
-                  className="flex items-center justify-between p-4 bg-[#0a0a0f] rounded-xl border border-[#d4af37]/10"
-                >
+                <div key={game} className="tx-item !mb-0">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-fuchsia-500 flex items-center justify-center shadow-[0_8px_20px_-8px_rgba(168,85,247,0.8)]">
                       <Gamepad2 className="w-5 h-5 text-white" />
                     </div>
                     <div>
                       <p className="font-medium">{game}</p>
-                      <p className="text-sm text-gray-500">Gaming Balance</p>
+                      <p className="text-xs text-gray-500">Game balance</p>
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="font-semibold">{balance.toFixed(2)} LXG</p>
-                    <p className="text-sm text-gray-500">~${(balance * lxgUsdRate).toFixed(2)}</p>
+                    <p className="font-semibold tabular">{balance.toFixed(2)} LXG</p>
+                    <p className="text-xs text-gray-500 tabular">≈ ${(balance * lxgUsdRate).toFixed(2)}</p>
                   </div>
                 </div>
               ))}
             </div>
           ) : (
-            <div className="text-center py-8">
-              <Gamepad2 className="w-12 h-12 text-gray-600 mx-auto mb-3" />
-              <p className="text-gray-400">No game wallets connected</p>
-              <Link to="/game-wallet" className="text-[#d4af37] text-sm mt-2 inline-block">
-                Connect your first game
-              </Link>
-            </div>
+            <EmptyState icon={Gamepad2} title="No game wallets linked yet" action={<Link to="/game-wallet" className="btn-secondary !py-2 text-sm mt-4">Connect your first game</Link>} />
           )}
-        </div>
+        </Spotlight>
 
-        {/* Quick Actions & Info */}
-        <div className="space-y-6">
-          {/* Quick Actions */}
-          <div className="card">
-            <h2 className="text-lg font-semibold mb-4">Quick Actions</h2>
-            <div className="space-y-2">
-              <Link
-                to="/deposit"
-                className="flex items-center gap-3 p-3 rounded-xl bg-[#0a0a0f] border border-[#d4af37]/10 hover:border-[#d4af37]/30 transition-colors"
-              >
-                <div className="w-8 h-8 rounded-lg bg-green-500/20 flex items-center justify-center">
-                  <TrendingUp className="w-4 h-4 text-green-500" />
-                </div>
-                <div className="flex-1">
-                  <p className="font-medium">Deposit Funds</p>
-                  <p className="text-xs text-gray-500">Add LXG to your wallet</p>
-                </div>
-                <ArrowRight className="w-4 h-4 text-gray-500" />
-              </Link>
-              
-              <Link
-                to="/withdraw"
-                className="flex items-center gap-3 p-3 rounded-xl bg-[#0a0a0f] border border-[#d4af37]/10 hover:border-[#d4af37]/30 transition-colors"
-              >
-                <div className="w-8 h-8 rounded-lg bg-blue-500/20 flex items-center justify-center">
-                  <Zap className="w-4 h-4 text-blue-500" />
-                </div>
-                <div className="flex-1">
-                  <p className="font-medium">Withdraw</p>
-                  <p className="text-xs text-gray-500">Cash out to bank</p>
-                </div>
-                <ArrowRight className="w-4 h-4 text-gray-500" />
-              </Link>
-              
-              <Link
-                to="/game-wallet"
-                className="flex items-center gap-3 p-3 rounded-xl bg-[#0a0a0f] border border-[#d4af37]/10 hover:border-[#d4af37]/30 transition-colors"
-              >
-                <div className="w-8 h-8 rounded-lg bg-purple-500/20 flex items-center justify-center">
-                  <Gamepad2 className="w-4 h-4 text-purple-500" />
-                </div>
-                <div className="flex-1">
-                  <p className="font-medium">Transfer to Game</p>
-                  <p className="text-xs text-gray-500">Move LXG to games</p>
-                </div>
-                <ArrowRight className="w-4 h-4 text-gray-500" />
-              </Link>
-            </div>
+        {/* Live network */}
+        <Spotlight>
+          <div className="flex items-center justify-between mb-1">
+            <h2 className="text-lg font-semibold flex items-center gap-2">
+              <Activity className="w-4 h-4 text-[#d4af37]" /> Network
+            </h2>
+            <span className="badge badge-success">
+              <span className={`live-dot ${network.online === false ? 'offline' : ''}`} /> {network.online === false ? 'Offline' : 'Live'}
+            </span>
+          </div>
+          <p className="text-xs text-gray-500 mb-4">{NETWORK_NAMES[network.chainId] || 'Polygon'} gas price, sampled every 6 s</p>
+
+          <div className="h-32 -mx-2">
+            {network.history.length > 1 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={network.history} margin={{ top: 4, right: 8, bottom: 0, left: 8 }}>
+                  <defs>
+                    <linearGradient id="gasFill" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#d4af37" stopOpacity={0.45} />
+                      <stop offset="100%" stopColor="#d4af37" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <YAxis hide domain={['dataMin - 5', 'dataMax + 5']} />
+                  <Tooltip
+                    cursor={{ stroke: 'rgba(212,175,55,0.4)' }}
+                    contentStyle={{ background: '#12121c', border: '1px solid rgba(212,175,55,0.3)', borderRadius: 12, fontSize: 12 }}
+                    labelFormatter={(_, payload) => (payload?.[0] ? `Block #${payload[0].payload.blockNumber.toLocaleString()}` : '')}
+                    formatter={(value) => [`${value.toFixed(1)} gwei`, 'Gas']}
+                  />
+                  <Area type="monotone" dataKey="gasGwei" stroke="#f6e27a" strokeWidth={2} fill="url(#gasFill)" isAnimationActive={false} />
+                </AreaChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="h-full rounded-xl animate-shimmer" />
+            )}
           </div>
 
-          {/* Features */}
-          <div className="card">
-            <h2 className="text-lg font-semibold mb-4">Features</h2>
-            <div className="space-y-3">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-[#d4af37]/20 flex items-center justify-center">
-                  <Globe className="w-4 h-4 text-[#d4af37]" />
-                </div>
-                <div>
-                  <p className="font-medium text-sm">BRICS+ Payments</p>
-                  <p className="text-xs text-gray-500">UPI, PIX, QIWI, Alipay</p>
-                </div>
-              </div>
-              
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-[#d4af37]/20 flex items-center justify-center">
-                  <Cpu className="w-4 h-4 text-[#d4af37]" />
-                </div>
-                <div>
-                  <p className="font-medium text-sm">AI Validation</p>
-                  <p className="text-xs text-gray-500">Gemini + Claude consensus</p>
-                </div>
-              </div>
-              
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-[#d4af37]/20 flex items-center justify-center">
-                  <Shield className="w-4 h-4 text-[#d4af37]" />
-                </div>
-                <div>
-                  <p className="font-medium text-sm">Trust Score</p>
-                  <p className="text-xs text-gray-500">Build reputation, unlock limits</p>
-                </div>
-              </div>
-            </div>
+          <div className="grid grid-cols-3 gap-2 mt-4">
+            <NetStat label="Block" value={network.blockNumber ? `#${network.blockNumber.toLocaleString()}` : '—'} />
+            <NetStat label="Gas" value={network.gasGwei ? `${network.gasGwei.toFixed(0)} gwei` : '—'} />
+            <NetStat label="RPC" value={network.latencyMs ? `${network.latencyMs} ms` : '—'} />
           </div>
-        </div>
+        </Spotlight>
       </div>
 
-      {/* Recent Transactions */}
-      <div className="card">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold">Recent Transactions</h2>
-          <Link to="/history" className="text-[#d4af37] text-sm flex items-center gap-1 hover:underline">
-            View All <ArrowRight className="w-4 h-4" />
-          </Link>
-        </div>
-        
+      {/* Recent transactions */}
+      <Spotlight>
+        <SectionHeader title="Recent transactions" to="/history" />
         {recentTransactions.length > 0 ? (
           <div className="space-y-2">
-            {recentTransactions.map((tx, index) => (
-              <div
-                key={index}
-                className="flex items-center justify-between p-4 bg-[#0a0a0f] rounded-xl"
-              >
-                <div className="flex items-center gap-3">
-                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                    tx.type === 'deposit' ? 'bg-green-500/20' :
-                    tx.type === 'withdraw' ? 'bg-red-500/20' :
-                    'bg-blue-500/20'
-                  }`}>
-                    {tx.type === 'deposit' ? <TrendingUp className="w-5 h-5 text-green-500" /> :
-                     tx.type === 'withdraw' ? <Zap className="w-5 h-5 text-red-500" /> :
-                     <Gamepad2 className="w-5 h-5 text-blue-500" />}
+            {recentTransactions.map((tx, index) => {
+              const style = TX_STYLE[tx.type] || TX_STYLE.default;
+              return (
+                <div key={tx.id || index} className="tx-item !mb-0">
+                  <div className="flex items-center gap-3">
+                    <div className={`w-10 h-10 rounded-xl ring-1 flex items-center justify-center ${style.tone}`}>
+                      <style.icon className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <p className="font-medium capitalize">{tx.type.replace('_', ' ')}</p>
+                      <p className="text-xs text-gray-500">{tx.source} → {tx.destination}</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="font-medium capitalize">{tx.type.replace('_', ' ')}</p>
-                    <p className="text-sm text-gray-500">
-                      {tx.source} → {tx.destination}
+                  <div className="text-right">
+                    <p className={`font-semibold tabular ${style.tone.split(' ')[0]}`}>
+                      {style.sign}{tx.amount_lxg?.toFixed(2)} LXG
                     </p>
+                    <p className="text-xs text-gray-500">{tx.created_at ? new Date(tx.created_at).toLocaleDateString() : 'Just now'}</p>
                   </div>
                 </div>
-                <div className="text-right">
-                  <p className={`font-semibold ${
-                    tx.type === 'deposit' ? 'text-green-500' :
-                    tx.type === 'withdraw' ? 'text-red-500' :
-                    'text-blue-500'
-                  }`}>
-                    {tx.type === 'deposit' ? '+' : '-'}{tx.amount_lxg?.toFixed(2)} LXG
-                  </p>
-                  <p className="text-xs text-gray-500">
-                    {tx.created_at ? new Date(tx.created_at).toLocaleDateString() : 'Just now'}
-                  </p>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         ) : (
-          <div className="text-center py-8">
-            <History className="w-12 h-12 text-gray-600 mx-auto mb-3" />
-            <p className="text-gray-400">No transactions yet</p>
-          </div>
+          <EmptyState icon={History} title="No transactions yet" body="Deposits, transfers and payouts will appear here." />
         )}
+      </Spotlight>
+    </div>
+  );
+}
+
+function SectionHeader({ title, to }) {
+  return (
+    <div className="flex items-center justify-between mb-4">
+      <h2 className="text-lg font-semibold">{title}</h2>
+      <Link to={to} className="text-[#d4af37] text-sm flex items-center gap-1 hover:gap-2 transition-all">
+        View all <ArrowRight className="w-4 h-4" />
+      </Link>
+    </div>
+  );
+}
+
+function MiniStat({ icon: Icon, label, value, hint, accent }) {
+  return (
+    <Spotlight className="!p-4 flex flex-col justify-between overflow-hidden">
+      <div className={`absolute -top-10 -right-10 w-28 h-28 rounded-full bg-gradient-to-br ${accent} to-transparent blur-2xl pointer-events-none`} />
+      <div className="flex items-center gap-2 text-gray-400 text-xs font-medium">
+        <Icon className="w-4 h-4" /> {label}
       </div>
+      <div>
+        <p className="mt-3 text-xl sm:text-2xl font-bold font-display">{value}</p>
+        <p className="text-xs text-gray-500 mt-0.5">{hint}</p>
+      </div>
+    </Spotlight>
+  );
+}
+
+function TrustRing({ score, tier }) {
+  const radius = 30;
+  const circumference = 2 * Math.PI * radius;
+  return (
+    <Spotlight className="!p-4 flex items-center gap-3">
+      <svg width="76" height="76" viewBox="0 0 76 76" className="-rotate-90 shrink-0">
+        <circle cx="38" cy="38" r={radius} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="7" />
+        <circle
+          cx="38"
+          cy="38"
+          r={radius}
+          fill="none"
+          stroke={tier.color}
+          strokeWidth="7"
+          strokeLinecap="round"
+          strokeDasharray={circumference}
+          strokeDashoffset={circumference * (1 - score / 100)}
+          style={{ transition: 'stroke-dashoffset 1s cubic-bezier(.2,.8,.2,1)', filter: `drop-shadow(0 0 6px ${tier.color})` }}
+        />
+      </svg>
+      <div>
+        <p className="text-xs text-gray-400 font-medium flex items-center gap-1"><Shield className="w-3.5 h-3.5" /> Trust</p>
+        <p className="text-2xl font-bold font-display">{score}</p>
+        <p className="text-xs" style={{ color: tier.color }}>{tier.label}</p>
+      </div>
+    </Spotlight>
+  );
+}
+
+function NetStat({ label, value }) {
+  return (
+    <div className="surface-inset px-2.5 py-2">
+      <p className="text-[10px] text-gray-500 uppercase tracking-wider">{label}</p>
+      <p className="text-xs font-mono font-semibold text-gray-200 truncate">{value}</p>
+    </div>
+  );
+}
+
+function EmptyState({ icon: Icon, title, body, action }) {
+  return (
+    <div className="text-center py-10 flex flex-col items-center">
+      <div className="w-14 h-14 rounded-2xl surface-inset flex items-center justify-center mb-3">
+        <Icon className="w-6 h-6 text-gray-500" />
+      </div>
+      <p className="text-gray-300 font-medium">{title}</p>
+      {body && <p className="text-sm text-gray-500 mt-1">{body}</p>}
+      {action}
     </div>
   );
 }

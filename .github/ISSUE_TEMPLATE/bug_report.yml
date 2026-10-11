@@ -1,0 +1,48 @@
+name: Bug report
+description: Something in Laxigam is broken or behaves unexpectedly
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping improve Laxigam. **Do not report security vulnerabilities here** — see [SECURITY.md](../blob/main/SECURITY.md).
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Smart contracts
+        - Backend API
+        - Frontend / Mini App
+        - Telegram bot
+        - Payment rail (UPI / PIX / QIWI / Alipay / Stars / TON)
+        - Docs
+    validations:
+      required: true
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: What did you expect, and what happened instead?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open /mediator
+        2. Select PIX, enter 100
+        3. ...
+    validations:
+      required: true
+  - type: input
+    id: env
+    attributes:
+      label: Environment
+      placeholder: e.g. Chrome 140 / Telegram iOS 11.2 / Python 3.11 / Hardhat local
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs or screenshots
+      render: shell

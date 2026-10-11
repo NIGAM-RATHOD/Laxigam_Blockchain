@@ -112,7 +112,7 @@ function GameWallet() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-white">Game Wallet</h1>
+        <h1 className="text-3xl font-bold text-white">Game Wallet</h1>
         <p className="text-gray-400 mt-1">Transfer LXG between your real wallet and game economies</p>
       </div>
 
@@ -120,7 +120,7 @@ function GameWallet() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="card">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#d4af37] to-[#b8941f] flex items-center justify-center">
+            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#d4af37] to-[#a8811a] flex items-center justify-center">
               <Wallet className="w-5 h-5 text-black" />
             </div>
             <div>
@@ -191,7 +191,7 @@ function GameWallet() {
                   </div>
                 </div>
                 
-                <button className="mt-4 w-full py-2 rounded-lg bg-[#0a0a0f] border border-[#d4af37]/20 text-[#d4af37] text-sm font-medium group-hover:bg-[#d4af37]/10 transition-colors">
+                <button className="mt-4 w-full py-2 rounded-lg bg-black/35 border border-[#d4af37]/20 text-[#d4af37] text-sm font-medium group-hover:bg-[#d4af37]/10 transition-colors">
                   Transfer LXG
                 </button>
               </div>
@@ -221,7 +221,7 @@ function GameWallet() {
           </div>
 
           {/* Transfer Type Toggle */}
-          <div className="flex gap-2 mb-6 p-1 bg-[#0a0a0f] rounded-xl">
+          <div className="flex gap-2 mb-6 p-1 bg-black/35 rounded-xl">
             <button
               onClick={() => setTransferType('deposit')}
               className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all ${
@@ -247,7 +247,7 @@ function GameWallet() {
           </div>
 
           {/* Current Balance */}
-          <div className="p-4 bg-[#0a0a0f] rounded-xl mb-6">
+          <div className="p-4 bg-black/35 rounded-xl mb-6">
             <div className="flex items-center justify-between">
               <span className="text-gray-400">
                 {transferType === 'deposit' ? 'Available in Real Wallet' : `Available in ${selectedGame.name}`}
@@ -282,7 +282,7 @@ function GameWallet() {
             </div>
 
             {amount && (
-              <div className="p-4 bg-[#0a0a0f] rounded-xl">
+              <div className="p-4 bg-black/35 rounded-xl">
                 <div className="flex items-center justify-between">
                   <span className="text-gray-400">
                     {transferType === 'deposit' ? 'In-Game Value' : 'Real Wallet Value'}

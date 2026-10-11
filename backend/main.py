@@ -19,6 +19,7 @@ from typing import Optional, List, Dict, Any
 from datetime import datetime, timedelta
 from decimal import Decimal
 import hashlib
+import hmac
 import os
 import random
 import time
@@ -34,7 +35,9 @@ load_dotenv()
 
 # Configuration
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "")
-MINI_APP_URL = os.getenv("MINI_APP_URL", "http://localhost:3000")
+MINI_APP_URL = os.getenv("MINI_APP_URL") or os.getenv("TELEGRAM_MINI_APP_URL", "http://localhost:3000")
+TELEGRAM_WEBHOOK_SECRET = os.getenv("TELEGRAM_WEBHOOK_SECRET", "")
+CORS_ORIGINS = [o.strip() for o in os.getenv("CORS_ORIGINS", "*").split(",") if o.strip()]
 API_SECRET_KEY = os.getenv("API_SECRET_KEY", "dev_secret_change_in_production")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "")
@@ -190,11 +193,15 @@ app = FastAPI(
 # CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
+    allow_origins=CORS_ORIGINS,
+    allow_credentials=CORS_ORIGINS != ["*"],
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Mediator App routes (Fiat <-> LXG)
+from mediator_service import router as mediator_router
+app.include_router(mediator_router)
 
 # Pydantic Models
 class TransactionData(BaseModel):
@@ -1052,111 +1059,117 @@ async def get_exchange_rates():
     }
 
 # Telegram Bot Webhook
+def _app_button(text: str = "🎮 Open Laxigam App", path: str = "") -> dict:
+    return {"text": text, "web_app": {"url": f"{MINI_APP_URL.rstrip('/')}{path}"}}
+
+PAYMENT_RAILS = """🇮🇳 UPI · 🇧🇷 PIX · 🇷🇺 QIWI · 🇨🇳 Alipay
+⭐ Telegram Stars · 💎 TON"""
+
+async def handle_bot_command(chat_id: str, command: str, first_name: str):
+    """Reply to a bot command or inline-button action. Every command in setup_telegram.py is handled here."""
+    if command == "start":
+        keyboard = {"inline_keyboard": [
+            [_app_button()],
+            [{"text": "💰 Balance", "callback_data": "balance"},
+             {"text": "📥 Deposit", "callback_data": "deposit"},
+             {"text": "📤 Withdraw", "callback_data": "withdraw"}],
+            [{"text": "❓ Help", "callback_data": "help"}],
+        ]}
+        text = f"""🎮 <b>Welcome to Laxigam, {first_name}!</b>
+
+The bridge between game economies and real-world money.
+Earn in games → hold <b>LXG</b> → cash out to your bank in minutes.
+
+<b>🌍 Payment rails</b>
+{PAYMENT_RAILS}
+
+<b>Your Chat ID:</b> <code>{chat_id}</code>
+<i>Paste it in Settings → Telegram to receive security PINs here.</i>"""
+        return await send_telegram_message(chat_id, text, keyboard)
+
+    if command == "app":
+        return await send_telegram_message(chat_id, "Tap below to open Laxigam:", {"inline_keyboard": [[_app_button()]]})
+
+    if command == "balance":
+        return await send_telegram_message(
+            chat_id,
+            "💰 <b>Balance</b>\n\nYour real and game wallets are shown live in the app.",
+            {"inline_keyboard": [[_app_button("💰 View balance", "/wallet")]]},
+        )
+
+    if command == "deposit":
+        return await send_telegram_message(
+            chat_id,
+            f"📥 <b>Buy LXG</b>\n\nPay with your local rail and receive LXG in your wallet.\n\n{PAYMENT_RAILS}\n\nFee: <b>0.5%</b>",
+            {"inline_keyboard": [[_app_button("📥 Start deposit", "/mediator")]]},
+        )
+
+    if command == "withdraw":
+        return await send_telegram_message(
+            chat_id,
+            "📤 <b>Cash out</b>\n\nSell LXG to UPI, PIX, QIWI or Alipay. Every withdrawal is checked by dual-AI validation and confirmed with a one-time PIN sent to this chat.\n\nFee: <b>1%</b>",
+            {"inline_keyboard": [[_app_button("📤 Start withdrawal", "/mediator")]]},
+        )
+
+    if command == "transfer":
+        return await send_telegram_message(
+            chat_id,
+            "🔁 <b>Transfer</b>\n\nMove LXG between your real wallet and connected game wallets.",
+            {"inline_keyboard": [[_app_button("🔁 Open game wallets", "/game-wallet")]]},
+        )
+
+    if command == "help":
+        text = f"""📚 <b>Laxigam Help</b>
+
+<b>Commands</b>
+/start – Welcome & setup
+/app – Open the Mini App
+/balance – Check balance
+/deposit – Buy LXG with local currency
+/withdraw – Cash out to your bank
+/transfer – Move LXG to a game
+/help – This menu
+
+<b>Security</b>
+• Dual-AI validation (Gemini + Claude)
+• One-time PINs delivered to this chat
+• Trust Score raises your limits over time
+
+<b>Payment rails</b>
+{PAYMENT_RAILS}"""
+        return await send_telegram_message(chat_id, text, {"inline_keyboard": [[_app_button()]]})
+
+    return await send_telegram_message(chat_id, f"👋 Hi {first_name}! Use /app to open Laxigam or /help for all commands.")
+
+
 @app.post("/telegram/webhook")
-async def telegram_webhook(request: Request):
-    """Handle Telegram bot webhook"""
+async def telegram_webhook(request: Request, x_telegram_bot_api_secret_token: str = Header(default="")):
+    """Handle Telegram bot updates. Rejects requests without the secret registered via setWebhook."""
+    if TELEGRAM_WEBHOOK_SECRET and not hmac.compare_digest(x_telegram_bot_api_secret_token, TELEGRAM_WEBHOOK_SECRET):
+        raise HTTPException(status_code=403, detail="Invalid webhook secret")
+
     data = await request.json()
-    
+
     if "message" in data:
         message = data["message"]
         chat_id = str(message.get("chat", {}).get("id", ""))
-        text = message.get("text", "")
-        user = message.get("from", {})
-        first_name = user.get("first_name", "User")
-        
-        if text == "/start":
-            keyboard = {
-                "inline_keyboard": [[
-                    {
-                        "text": "🎮 Open Laxigam App",
-                        "web_app": {"url": MINI_APP_URL}
-                    }
-                ], [
-                    {"text": "💰 Check Balance", "callback_data": "balance"},
-                    {"text": "❓ Help", "callback_data": "help"}
-                ]]
-            }
-            
-            welcome = f"""
-🎮 <b>Welcome to Laxigam, {first_name}!</b>
+        text = (message.get("text") or "").strip()
+        first_name = message.get("from", {}).get("first_name", "there")
 
-The blockchain that bridges real-world finance with game economies.
+        # "/deposit@Laxigam_blockchain_bot 100" -> "deposit"
+        command = text.split()[0][1:].split("@")[0].lower() if text.startswith("/") else ""
+        await handle_bot_command(chat_id, command, first_name)
 
-<b>🌍 BRICS+ Payments Supported:</b>
-🇮🇳 India - UPI
-🇧🇷 Brazil - PIX
-🇷🇺 Russia - QIWI
-🇨🇳 China - Alipay
-🇿🇦 South Africa - PayFast
-⭐ Telegram Stars
-💎 TON Network
-
-<b>Your Chat ID:</b> <code>{chat_id}</code>
-<i>(Copy this to link your wallet)</i>
-
-Tap below to open the Mini App:
-            """
-            await send_telegram_message(chat_id, welcome, keyboard)
-        
-        elif text == "/app":
-            keyboard = {
-                "inline_keyboard": [[
-                    {"text": "🎮 Open Laxigam App", "web_app": {"url": MINI_APP_URL}}
-                ]]
-            }
-            await send_telegram_message(chat_id, "Tap below to open the app:", keyboard)
-        
-        elif text == "/balance":
-            await send_telegram_message(chat_id, "💰 Connect your wallet in the app to view balance.\n\nUse /app to open.")
-        
-        elif text == "/help":
-            help_text = """
-📚 <b>Laxigam Help</b>
-
-<b>Commands:</b>
-/start - Welcome & Setup
-/app - Open Mini App
-/balance - Check balance
-/help - This menu
-
-<b>Features:</b>
-• <b>Deposit</b>: Fiat → LXG tokens
-• <b>Transfer</b>: Real ↔ Game wallets
-• <b>Withdraw</b>: LXG → Fiat
-• <b>AI Security</b>: Dual validation
-• <b>Trust Score</b>: Build reputation
-
-<b>Supported Payments:</b>
-🇮🇳 UPI (India)
-🇧🇷 PIX (Brazil)
-🇷🇺 QIWI (Russia)
-🇨🇳 Alipay (China)
-⭐ Telegram Stars
-💎 TON Network
-
-Need support? Contact @LaxigamSupport
-            """
-            await send_telegram_message(chat_id, help_text)
-        
-        else:
-            await send_telegram_message(chat_id, f"👋 Hi {first_name}!\n\nUse /app to open Laxigam or /help for commands.")
-    
-    # Handle callback queries
     if "callback_query" in data:
         callback = data["callback_query"]
         chat_id = str(callback["message"]["chat"]["id"])
-        action = callback["data"]
-        
-        if action == "balance":
-            await send_telegram_message(chat_id, "💰 Connect wallet in app to check balance.\n\nUse /app to open.")
-        elif action == "help":
-            await send_telegram_message(chat_id, "Use /help for full menu.")
-        
-        # Answer callback
+        first_name = callback.get("from", {}).get("first_name", "there")
+        await handle_bot_command(chat_id, callback.get("data", ""), first_name)
+
         url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/answerCallbackQuery"
         async with httpx.AsyncClient() as client:
-            await client.post(url, json={"callback_query_id": callback["id"]})
-    
+            await client.post(url, json={"callback_query_id": callback["id"]}, timeout=10.0)
+
     return {"ok": True}
 
 @app.get("/telegram/info")

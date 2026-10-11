@@ -1,5 +1,6 @@
 const { expect } = require("chai");
 const { ethers } = require("hardhat");
+const { anyValue } = require("@nomicfoundation/hardhat-chai-matchers/withArgs");
 
 describe("GameBridge", function () {
   let LXGToken;
@@ -14,6 +15,19 @@ describe("GameBridge", function () {
   let addr1;
   let addr2;
   let treasury;
+  let nonce = 0;
+
+  // The oracle (owner in these tests) approves a deposit off-chain, exactly like
+  // backend/signer.py: sign(keccak256(abi.encodePacked(sender, amount, nonce)))
+  async function signedDeposit(player, amount, gameName) {
+    const currentNonce = nonce++;
+    const hash = ethers.solidityPackedKeccak256(
+      ["address", "uint256", "uint256"],
+      [player.address, amount, currentNonce]
+    );
+    const signature = await owner.signMessage(ethers.getBytes(hash));
+    return gameBridge.connect(player).depositToGame(amount, gameName, currentNonce, signature);
+  }
 
   beforeEach(async function () {
     [owner, addr1, addr2, treasury] = await ethers.getSigners();
@@ -54,7 +68,7 @@ describe("GameBridge", function () {
     it("Should allow owner to register a game", async function () {
       await expect(gameBridge.registerGame("GTA V", addr2.address))
         .to.emit(gameBridge, "GameRegistered")
-        .withArgs("GTA V", addr2.address, await ethers.provider.getBlock("latest").then(b => b.timestamp));
+        .withArgs("GTA V", addr2.address, anyValue);
     });
 
     it("Should track registered games", async function () {
@@ -77,14 +91,14 @@ describe("GameBridge", function () {
     it("Should deposit tokens to game", async function () {
       const amount = ethers.parseEther("100");
       
-      await expect(gameBridge.connect(addr1).depositToGame(amount, "GTA V"))
+      await expect(signedDeposit(addr1, amount, "GTA V"))
         .to.emit(gameBridge, "DepositToGame")
-        .withArgs(addr1.address, amount, "GTA V", await ethers.provider.getBlock("latest").then(b => b.timestamp), 0);
+        .withArgs(addr1.address, amount, "GTA V", anyValue, 0);
     });
 
     it("Should update game balance", async function () {
       const amount = ethers.parseEther("100");
-      await gameBridge.connect(addr1).depositToGame(amount, "GTA V");
+      await signedDeposit(addr1, amount, "GTA V");
       
       const balance = await gameBridge.getGameBalance(addr1.address, "GTA V");
       expect(balance).to.equal(amount);
@@ -92,7 +106,7 @@ describe("GameBridge", function () {
 
     it("Should update total game balance", async function () {
       const amount = ethers.parseEther("100");
-      await gameBridge.connect(addr1).depositToGame(amount, "GTA V");
+      await signedDeposit(addr1, amount, "GTA V");
       
       const [, totalGameBal] = await gameBridge.getBalance(addr1.address);
       expect(totalGameBal).to.equal(amount);
@@ -101,13 +115,13 @@ describe("GameBridge", function () {
     it("Should fail for unregistered game", async function () {
       const amount = ethers.parseEther("100");
       await expect(
-        gameBridge.connect(addr1).depositToGame(amount, "Unregistered Game")
+        signedDeposit(addr1, amount, "Unregistered Game")
       ).to.be.revertedWith("Game not registered");
     });
 
     it("Should fail for zero amount", async function () {
       await expect(
-        gameBridge.connect(addr1).depositToGame(0, "GTA V")
+        signedDeposit(addr1, 0, "GTA V")
       ).to.be.revertedWith("Amount must be > 0");
     });
   });
@@ -116,7 +130,7 @@ describe("GameBridge", function () {
     beforeEach(async function () {
       await gameBridge.registerGame("GTA V", addr2.address);
       const amount = ethers.parseEther("100");
-      await gameBridge.connect(addr1).depositToGame(amount, "GTA V");
+      await signedDeposit(addr1, amount, "GTA V");
     });
 
     it("Should withdraw tokens from game", async function () {
@@ -124,7 +138,7 @@ describe("GameBridge", function () {
       
       await expect(gameBridge.connect(addr1).withdrawToWallet(withdrawAmount, "GTA V"))
         .to.emit(gameBridge, "WithdrawToWallet")
-        .withArgs(addr1.address, withdrawAmount, "GTA V", await ethers.provider.getBlock("latest").then(b => b.timestamp));
+        .withArgs(addr1.address, withdrawAmount, "GTA V", anyValue);
     });
 
     it("Should update game balance after withdrawal", async function () {
@@ -153,13 +167,13 @@ describe("GameBridge", function () {
     it("Should create escrow for large amounts", async function () {
       const amount = ethers.parseEther("15000"); // Above 10k threshold
       
-      await expect(gameBridge.connect(addr1).depositToGame(amount, "GTA V"))
+      await expect(signedDeposit(addr1, amount, "GTA V"))
         .to.emit(gameBridge, "EscrowCreated");
     });
 
     it("Should not release escrow before time", async function () {
       const amount = ethers.parseEther("15000");
-      await gameBridge.connect(addr1).depositToGame(amount, "GTA V");
+      await signedDeposit(addr1, amount, "GTA V");
       
       const escrows = await gameBridge.getUserEscrows(addr1.address);
       
@@ -174,7 +188,7 @@ describe("GameBridge", function () {
       await gameBridge.registerGame("GTA V", addr2.address);
       await gameBridge.registerGame("Minecraft", addr2.address);
       const amount = ethers.parseEther("100");
-      await gameBridge.connect(addr1).depositToGame(amount, "GTA V");
+      await signedDeposit(addr1, amount, "GTA V");
     });
 
     it("Should transfer between games", async function () {
@@ -194,7 +208,7 @@ describe("GameBridge", function () {
     beforeEach(async function () {
       await gameBridge.registerGame("GTA V", addr2.address);
       const amount = ethers.parseEther("100");
-      await gameBridge.connect(addr1).depositToGame(amount, "GTA V");
+      await signedDeposit(addr1, amount, "GTA V");
     });
 
     it("Should transfer to another player in same game", async function () {
@@ -217,10 +231,36 @@ describe("GameBridge", function () {
 
     it("Should track transaction history", async function () {
       const amount = ethers.parseEther("100");
-      await gameBridge.connect(addr1).depositToGame(amount, "GTA V");
+      await signedDeposit(addr1, amount, "GTA V");
       
       const history = await gameBridge.getTransactionHistory(addr1.address);
       expect(history.length).to.be.greaterThan(0);
     });
+  });
+});
+
+describe("GameBridge signature checks", function () {
+  it("Should reject a deposit signed by someone other than the oracle", async function () {
+    const [owner, player, attacker, treasury] = await ethers.getSigners();
+    const lxgToken = await (await ethers.getContractFactory("LXGToken")).deploy(treasury.address);
+    const trustScore = await (await ethers.getContractFactory("TrustScore")).deploy();
+    const aiValidator = await (await ethers.getContractFactory("AIValidator")).deploy(owner.address);
+    const gameBridge = await (await ethers.getContractFactory("GameBridge")).deploy(
+      await lxgToken.getAddress(),
+      await trustScore.getAddress(),
+      await aiValidator.getAddress()
+    );
+    await trustScore.registerAuthorizedContract(await gameBridge.getAddress());
+    await gameBridge.registerGame("GTA V", owner.address);
+    await lxgToken.transfer(player.address, ethers.parseEther("100"));
+    await lxgToken.connect(player).approve(await gameBridge.getAddress(), ethers.parseEther("100"));
+
+    const amount = ethers.parseEther("100");
+    const hash = ethers.solidityPackedKeccak256(["address", "uint256", "uint256"], [player.address, amount, 0]);
+    const forged = await attacker.signMessage(ethers.getBytes(hash));
+
+    await expect(
+      gameBridge.connect(player).depositToGame(amount, "GTA V", 0, forged)
+    ).to.be.revertedWith("Invalid Signature or Unauthorized Transaction");
   });
 });

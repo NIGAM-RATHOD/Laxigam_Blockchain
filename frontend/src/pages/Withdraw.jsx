@@ -129,7 +129,7 @@ function Withdraw() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-white">Withdraw LXG</h1>
+        <h1 className="text-3xl font-bold text-white">Withdraw LXG</h1>
         <p className="text-gray-400 mt-1">Convert your LXG to fiat or crypto</p>
       </div>
 
@@ -141,7 +141,7 @@ function Withdraw() {
             <p className="text-2xl font-bold mt-1">{realBalance.toFixed(2)} LXG</p>
             <p className="text-sm text-gray-500">≈ ${(realBalance * lxgUsdRate).toFixed(2)} USD</p>
           </div>
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#d4af37] to-[#b8941f] flex items-center justify-center">
+          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#d4af37] to-[#a8811a] flex items-center justify-center">
             <Wallet className="w-6 h-6 text-black" />
           </div>
         </div>
@@ -221,7 +221,7 @@ function Withdraw() {
             </div>
 
             {amount && (
-              <div className="p-4 bg-[#0a0a0f] rounded-xl space-y-2">
+              <div className="p-4 bg-black/35 rounded-xl space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="text-gray-400">You send</span>
                   <span className="font-medium">{parseFloat(amount).toFixed(2)} LXG</span>
@@ -336,27 +336,27 @@ function Withdraw() {
           <h3 className="font-semibold mb-4">Confirm Withdrawal</h3>
           
           <div className="space-y-3 mb-6">
-            <div className="flex justify-between p-3 bg-[#0a0a0f] rounded-lg">
+            <div className="flex justify-between p-3 bg-black/35 rounded-lg">
               <span className="text-gray-400">Method</span>
               <span className="font-medium">{selectedMethod.name}</span>
             </div>
-            <div className="flex justify-between p-3 bg-[#0a0a0f] rounded-lg">
+            <div className="flex justify-between p-3 bg-black/35 rounded-lg">
               <span className="text-gray-400">Amount</span>
               <span className="font-medium">{parseFloat(amount).toFixed(2)} LXG</span>
             </div>
-            <div className="flex justify-between p-3 bg-[#0a0a0f] rounded-lg">
+            <div className="flex justify-between p-3 bg-black/35 rounded-lg">
               <span className="text-gray-400">Fee</span>
               <span className="font-medium text-red-500">-{fee.toFixed(2)} LXG</span>
             </div>
-            <div className="flex justify-between p-3 bg-[#0a0a0f] rounded-lg">
+            <div className="flex justify-between p-3 bg-black/35 rounded-lg">
               <span className="text-gray-400">Net Amount</span>
               <span className="font-bold text-green-500">{netAmount.toFixed(2)} LXG</span>
             </div>
-            <div className="flex justify-between p-3 bg-[#0a0a0f] rounded-lg">
+            <div className="flex justify-between p-3 bg-black/35 rounded-lg">
               <span className="text-gray-400">Destination</span>
               <span className="font-mono text-sm">{destination.slice(0, 20)}...</span>
             </div>
-            <div className="flex justify-between p-3 bg-[#0a0a0f] rounded-lg">
+            <div className="flex justify-between p-3 bg-black/35 rounded-lg">
               <span className="text-gray-400">Processing Time</span>
               <span className="font-medium">{selectedMethod.processingTime}</span>
             </div>
@@ -391,7 +391,7 @@ function Withdraw() {
           </p>
 
           <div className="space-y-3 mb-6 text-left">
-            <div className="flex items-center justify-between p-3 bg-[#0a0a0f] rounded-lg">
+            <div className="flex items-center justify-between p-3 bg-black/35 rounded-lg">
               <span className="text-gray-400">Withdrawal ID</span>
               <div className="flex items-center gap-2">
                 <span className="font-mono text-sm">{withdrawalData.withdrawal_id}</span>
@@ -403,15 +403,15 @@ function Withdraw() {
                 </button>
               </div>
             </div>
-            <div className="flex items-center justify-between p-3 bg-[#0a0a0f] rounded-lg">
+            <div className="flex items-center justify-between p-3 bg-black/35 rounded-lg">
               <span className="text-gray-400">Amount</span>
               <span className="font-medium">{withdrawalData.net_amount.toFixed(2)} LXG</span>
             </div>
-            <div className="flex items-center justify-between p-3 bg-[#0a0a0f] rounded-lg">
+            <div className="flex items-center justify-between p-3 bg-black/35 rounded-lg">
               <span className="text-gray-400">Status</span>
               <span className="badge badge-success">Processing</span>
             </div>
-            <div className="flex items-center justify-between p-3 bg-[#0a0a0f] rounded-lg">
+            <div className="flex items-center justify-between p-3 bg-black/35 rounded-lg">
               <span className="text-gray-400">Estimated Time</span>
               <span className="text-[#d4af37]">{withdrawalData.estimated_time}</span>
             </div>

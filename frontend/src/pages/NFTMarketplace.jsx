@@ -116,7 +116,7 @@ function NFTMarketplace() {
   const rarities = ['all', ...new Set(mockNFTs.map(nft => nft.rarity))];
 
   const handleBuy = (nft) => {
-    toast.info(`Purchase feature coming soon! ${nft.name} costs ${nft.price} LXG`);
+    toast(`Purchase feature coming soon! ${nft.name} costs ${nft.price} LXG`);
   };
 
   const handleLike = (nftId) => {
@@ -128,12 +128,12 @@ function NFTMarketplace() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-white">NFT Marketplace</h1>
+          <h1 className="text-3xl font-bold text-white">NFT Marketplace</h1>
           <p className="text-gray-400 mt-1">Buy and sell in-game items as NFTs</p>
         </div>
         <div className="flex gap-3">
           <button
-            onClick={() => toast.info('List item feature coming soon!')}
+            onClick={() => toast('List item feature coming soon!')}
             className="btn-primary"
           >
             <Tag className="w-4 h-4" />
@@ -258,7 +258,7 @@ function NFTMarketplace() {
                         e.stopPropagation();
                         handleLike(nft.id);
                       }}
-                      className="p-2 rounded-lg bg-[#0a0a0f] hover:bg-white/5 transition-colors"
+                      className="p-2 rounded-lg bg-black/35 hover:bg-white/5 transition-colors"
                     >
                       <Heart className="w-4 h-4" />
                     </button>
@@ -294,7 +294,7 @@ function NFTMarketplace() {
           <h3 className="text-xl font-semibold mb-2">No Items Listed</h3>
           <p className="text-gray-400 mb-4">You haven't listed any items yet</p>
           <button
-            onClick={() => toast.info('List item feature coming soon!')}
+            onClick={() => toast('List item feature coming soon!')}
             className="btn-primary"
           >
             List Your First Item
@@ -345,11 +345,11 @@ function NFTMarketplace() {
             <p className="text-gray-300 mb-6">{selectedNFT.description}</p>
 
             <div className="grid grid-cols-2 gap-4 mb-6">
-              <div className="p-4 bg-[#0a0a0f] rounded-xl">
+              <div className="p-4 bg-black/35 rounded-xl">
                 <p className="text-sm text-gray-500">Price</p>
                 <p className="text-2xl font-bold text-[#d4af37]">{selectedNFT.price} LXG</p>
               </div>
-              <div className="p-4 bg-[#0a0a0f] rounded-xl">
+              <div className="p-4 bg-black/35 rounded-xl">
                 <p className="text-sm text-gray-500">Seller</p>
                 <p className="font-medium">{selectedNFT.seller}</p>
               </div>

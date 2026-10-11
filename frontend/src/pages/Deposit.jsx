@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { useWalletStore, useExchangeStore } from '../store/walletStore';
 import toast from 'react-hot-toast';
+import Flag from '../components/ui/Flag';
 
 const paymentMethods = [
   {
@@ -132,7 +133,7 @@ function Deposit() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-white">Deposit LXG</h1>
+        <h1 className="text-3xl font-bold text-white">Deposit LXG</h1>
         <p className="text-gray-400 mt-1">Add funds to your wallet using BRICS+ payments</p>
       </div>
 
@@ -177,7 +178,7 @@ function Deposit() {
               >
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#d4af37]/20 to-[#d4af37]/5 flex items-center justify-center">
-                    <span className="text-2xl">{method.flag}</span>
+                    <Flag emoji={method.flag} size={22} />
                   </div>
                   <div className="flex-1">
                     <h3 className="font-semibold">{method.name}</h3>
@@ -201,7 +202,7 @@ function Deposit() {
             >
               ← Back
             </button>
-            <span className="text-2xl">{selectedMethod.flag}</span>
+            <Flag emoji={selectedMethod.flag} size={22} />
             <div>
               <h3 className="font-semibold">{selectedMethod.name}</h3>
               <p className="text-sm text-gray-500">{selectedMethod.country}</p>
@@ -228,7 +229,7 @@ function Deposit() {
             </div>
 
             {amount && (
-              <div className="p-4 bg-[#0a0a0f] rounded-xl">
+              <div className="p-4 bg-black/35 rounded-xl">
                 <div className="flex items-center justify-between">
                   <span className="text-gray-400">You will receive</span>
                   <span className="text-xl font-bold text-[#d4af37]">
@@ -260,19 +261,19 @@ function Deposit() {
           <h3 className="font-semibold mb-4">Confirm Deposit</h3>
           
           <div className="space-y-4 mb-6">
-            <div className="flex justify-between p-3 bg-[#0a0a0f] rounded-lg">
+            <div className="flex justify-between p-3 bg-black/35 rounded-lg">
               <span className="text-gray-400">Payment Method</span>
               <span className="font-medium">{selectedMethod?.name}</span>
             </div>
-            <div className="flex justify-between p-3 bg-[#0a0a0f] rounded-lg">
+            <div className="flex justify-between p-3 bg-black/35 rounded-lg">
               <span className="text-gray-400">Amount</span>
               <span className="font-medium">{amount} {currency}</span>
             </div>
-            <div className="flex justify-between p-3 bg-[#0a0a0f] rounded-lg">
+            <div className="flex justify-between p-3 bg-black/35 rounded-lg">
               <span className="text-gray-400">You Receive</span>
               <span className="font-bold text-[#d4af37]">{lxgAmount.toFixed(2)} LXG</span>
             </div>
-            <div className="flex justify-between p-3 bg-[#0a0a0f] rounded-lg">
+            <div className="flex justify-between p-3 bg-black/35 rounded-lg">
               <span className="text-gray-400">Network Fee</span>
               <span className="font-medium text-green-500">Free</span>
             </div>
@@ -313,7 +314,7 @@ function Deposit() {
           </p>
 
           <div className="space-y-3 mb-6">
-            <div className="flex items-center justify-between p-3 bg-[#0a0a0f] rounded-lg">
+            <div className="flex items-center justify-between p-3 bg-black/35 rounded-lg">
               <span className="text-gray-400">Payment ID</span>
               <div className="flex items-center gap-2">
                 <span className="font-mono text-sm">{depositData.payment_id}</span>
@@ -325,11 +326,11 @@ function Deposit() {
                 </button>
               </div>
             </div>
-            <div className="flex items-center justify-between p-3 bg-[#0a0a0f] rounded-lg">
+            <div className="flex items-center justify-between p-3 bg-black/35 rounded-lg">
               <span className="text-gray-400">Amount</span>
               <span className="font-medium">{depositData.amount} {depositData.currency}</span>
             </div>
-            <div className="flex items-center justify-between p-3 bg-[#0a0a0f] rounded-lg">
+            <div className="flex items-center justify-between p-3 bg-black/35 rounded-lg">
               <span className="text-gray-400">Expires</span>
               <span className="text-sm text-yellow-500">30 minutes</span>
             </div>

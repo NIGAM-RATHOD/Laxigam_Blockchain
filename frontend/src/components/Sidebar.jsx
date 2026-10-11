@@ -1,119 +1,118 @@
 import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { NavLink } from 'react-router-dom';
 import {
-  LayoutDashboard,
-  Wallet,
-  Gamepad2,
   ArrowDownLeft,
+  ArrowLeftRight,
   ArrowUpRight,
-  Image,
+  ExternalLink,
+  Gamepad2,
+  Github,
   History,
+  Image,
+  LayoutDashboard,
+  Send,
   Settings,
-  ExternalLink
+  Wallet,
 } from 'lucide-react';
+import { APP_VERSION, GITHUB_URL, TELEGRAM_URL } from '../config';
+import Flag from './ui/Flag';
+
+export const NAV_SECTIONS = [
+  {
+    title: 'Overview',
+    items: [
+      { path: '/', label: 'Dashboard', icon: LayoutDashboard },
+      { path: '/wallet', label: 'Real Wallet', icon: Wallet },
+      { path: '/game-wallet', label: 'Game Wallets', icon: Gamepad2 },
+    ],
+  },
+  {
+    title: 'Move money',
+    items: [
+      { path: '/mediator', label: 'Mediator', icon: ArrowLeftRight, badge: 'Fiat ⇄ LXG' },
+      { path: '/deposit', label: 'Deposit', icon: ArrowDownLeft },
+      { path: '/withdraw', label: 'Withdraw', icon: ArrowUpRight },
+    ],
+  },
+  {
+    title: 'More',
+    items: [
+      { path: '/nft', label: 'NFT Marketplace', icon: Image },
+      { path: '/history', label: 'History', icon: History },
+      { path: '/settings', label: 'Settings', icon: Settings },
+    ],
+  },
+];
 
 function Sidebar() {
-  const location = useLocation();
-
-  const menuItems = [
-    { path: '/', label: 'Dashboard', icon: LayoutDashboard },
-    { path: '/wallet', label: 'Real Wallet', icon: Wallet },
-    { path: '/game-wallet', label: 'Game Wallet', icon: Gamepad2 },
-    { path: '/deposit', label: 'Deposit', icon: ArrowDownLeft },
-    { path: '/withdraw', label: 'Withdraw', icon: ArrowUpRight },
-    { path: '/nft', label: 'NFT Marketplace', icon: Image },
-    { path: '/history', label: 'History', icon: History },
-    { path: '/settings', label: 'Settings', icon: Settings },
-  ];
-
   return (
-    <aside className="hidden lg:block fixed left-0 top-16 bottom-0 w-64 bg-[#0a0a0f] border-r border-[#d4af37]/10 overflow-y-auto">
-      <div className="p-4">
-        {/* Navigation */}
-        <nav className="space-y-1">
-          {menuItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = location.pathname === item.path;
-            
-            return (
-              <Link
-                key={item.path}
-                to={item.path}
-                className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
-                  isActive
-                    ? 'bg-gradient-to-r from-[#d4af37]/20 to-transparent text-[#d4af37] border-l-2 border-[#d4af37]'
-                    : 'text-gray-400 hover:text-white hover:bg-white/5'
-                }`}
-              >
-                <Icon className={`w-5 h-5 ${isActive ? 'text-[#d4af37]' : ''}`} />
-                <span className="font-medium">{item.label}</span>
-              </Link>
-            );
-          })}
-        </nav>
+    <aside className="hidden lg:flex flex-col fixed left-0 top-16 bottom-0 w-64 z-40 border-r border-white/5 bg-black/30 backdrop-blur-xl">
+      <nav className="flex-1 overflow-y-auto p-4 space-y-6">
+        {NAV_SECTIONS.map((section) => (
+          <div key={section.title}>
+            <p className="eyebrow px-3 mb-2 !text-[10px]">{section.title}</p>
+            <div className="space-y-1">
+              {section.items.map((item) => (
+                <NavLink
+                  key={item.path}
+                  to={item.path}
+                  end={item.path === '/'}
+                  className={({ isActive }) =>
+                    `group relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
+                      isActive
+                        ? 'text-white bg-gradient-to-r from-[#d4af37]/15 via-[#d4af37]/5 to-transparent'
+                        : 'text-gray-400 hover:text-white hover:bg-white/[0.04]'
+                    }`
+                  }
+                >
+                  {({ isActive }) => (
+                    <>
+                      {isActive && <span className="absolute left-0 top-2 bottom-2 w-[3px] rounded-full bg-gradient-to-b from-[#f6e27a] to-[#a8811a] shadow-[0_0_12px_rgba(212,175,55,0.8)]" />}
+                      <item.icon className={`w-[18px] h-[18px] ${isActive ? 'text-[#f6e27a]' : 'text-gray-500 group-hover:text-gray-300'}`} />
+                      <span>{item.label}</span>
+                      {item.badge && <span className="ml-auto text-[10px] font-semibold px-1.5 py-0.5 rounded-md bg-[#d4af37]/15 text-[#f6e27a]">{item.badge}</span>}
+                    </>
+                  )}
+                </NavLink>
+              ))}
+            </div>
+          </div>
+        ))}
 
-        {/* Divider */}
-        <div className="my-6 border-t border-[#d4af37]/10"></div>
-
-        {/* Quick Actions */}
-        <div className="space-y-3">
-          <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider px-4">
-            Quick Actions
-          </h3>
-          
-          <a
-            href="https://t.me/Laxigam_blockchain_bot"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-400 hover:text-white hover:bg-white/5 transition-all"
-          >
-            <span className="text-xl">✈️</span>
-            <span className="font-medium">Telegram Bot</span>
-            <ExternalLink className="w-4 h-4 ml-auto" />
-          </a>
-          
-          <a
-            href="https://blum.io"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-400 hover:text-white hover:bg-white/5 transition-all"
-          >
-            <span className="text-xl">🪙</span>
-            <span className="font-medium">Alex Coin (BLUM)</span>
-            <ExternalLink className="w-4 h-4 ml-auto" />
-          </a>
+        <div>
+          <p className="eyebrow px-3 mb-2 !text-[10px]">Connect</p>
+          <ExternalItem href={TELEGRAM_URL} icon={Send} iconClass="text-sky-400">Telegram Bot</ExternalItem>
+          <ExternalItem href={GITHUB_URL} icon={Github}>Source on GitHub</ExternalItem>
         </div>
+      </nav>
 
-        {/* Divider */}
-        <div className="my-6 border-t border-[#d4af37]/10"></div>
-
-        {/* Supported Countries */}
-        <div className="px-4">
-          <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
-            BRICS+ Payments
-          </h3>
-          <div className="flex flex-wrap gap-2">
-            <span className="text-lg" title="India - UPI">🇮🇳</span>
-            <span className="text-lg" title="Brazil - PIX">🇧🇷</span>
-            <span className="text-lg" title="Russia - QIWI">🇷🇺</span>
-            <span className="text-lg" title="China - Alipay">🇨🇳</span>
-            <span className="text-lg" title="South Africa">🇿🇦</span>
-            <span className="text-lg" title="Telegram Stars">⭐</span>
-            <span className="text-lg" title="TON Network">💎</span>
+      <div className="p-4 border-t border-white/5">
+        <div className="surface-inset p-3">
+          <p className="text-[10px] eyebrow mb-2">BRICS+ rails</p>
+          <div className="flex justify-between text-lg">
+            {[['🇮🇳', 'India · UPI'], ['🇧🇷', 'Brazil · PIX'], ['🇷🇺', 'Russia · QIWI'], ['🇨🇳', 'China · Alipay'], ['🇿🇦', 'South Africa'], ['⭐', 'Telegram Stars'], ['💎', 'TON']].map(([flag, title]) => (
+              <span key={title} className="hover:scale-125 transition-transform cursor-default"><Flag emoji={flag} size={14} title={title} /></span>
+            ))}
           </div>
         </div>
-
-        {/* Version */}
-        <div className="mt-8 px-4">
-          <p className="text-xs text-gray-600">
-            Laxigam v2.0.0
-          </p>
-          <p className="text-xs text-gray-600 mt-1">
-            LXG Token • ERC-20
-          </p>
-        </div>
+        <p className="mt-3 px-1 text-[11px] text-gray-600 font-mono">Laxigam v{APP_VERSION} · LXG ERC-20 · Polygon</p>
       </div>
     </aside>
+  );
+}
+
+function ExternalItem({ href, icon: Icon, iconClass = 'text-gray-500', children }) {
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="group flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-gray-400 hover:text-white hover:bg-white/[0.04] transition-all"
+    >
+      <Icon className={`w-[18px] h-[18px] ${iconClass}`} />
+      {children}
+      <ExternalLink className="w-3.5 h-3.5 ml-auto opacity-0 group-hover:opacity-60 transition-opacity" />
+    </a>
   );
 }
 
